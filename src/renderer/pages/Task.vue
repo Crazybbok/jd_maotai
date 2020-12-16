@@ -15,28 +15,27 @@
           <a slot="title">{{ item.detail.name }}</a>
           <a-avatar slot="avatar" :src="`http:${item.detail.imageSrc}`" />
         </a-list-item-meta>
-        <a-button
-          v-if="isTaskRunning(item.skuId)"
-          type="link"
-          size="small"
-          slot="actions"
-          @click="stopTaskBySku(item.skuId)"
-        >
+        <a v-if="isTaskRunning(item.skuId)" slot="actions" @click="stopTaskBySku(item.skuId)">
           停止
-        </a-button>
-        <a-button v-else type="link" size="small" slot="actions" @click="createOrders(item)">
+        </a>
+        <a v-else slot="actions" @click="createOrders(item)">
           开抢
-        </a-button>
-        <a-button type="link" size="small" slot="actions" @click="deleteTask(item.skuId)">删除</a-button>
+        </a>
+        <!-- 更多 -->
+        <more-actions slot="actions">
+          <a @click="addToCart(item)">加入购物车</a>
+          <a @click="deleteTask(item.skuId)">删除任务</a>
+        </more-actions>
       </a-list-item>
     </a-list>
-    <AddTask ref="addTask" />
+    <add-task ref="addTask" />
   </div>
 </template>
 <script>
 import { mapGetters } from 'vuex'
 import dayjs from 'dayjs'
 import AddTask from './modal/AddTask'
+import MoreActions from '@/components/MoreActions'
 // import log from 'electron-log'
 const jd = window.preload.jd
 // 抢购提示语
@@ -48,7 +47,8 @@ const NOTIFIACTION = {
 export default {
   name: 'Task',
   components: {
-    AddTask
+    AddTask,
+    MoreActions
   },
   data() {
     return {
@@ -83,7 +83,7 @@ export default {
             this.createOrder(account, skuId, buyNum, taskType)
             return
           }
-          this.$message.info(`账号${account.name}抢购中，还未到抢购时间`)
+          this.$message.info(`账号「${account.name}」抢购中，还未到抢购时间`)
         }, 1000)
         this.timers.push({
           pinId: account.pinId,
@@ -152,6 +152,14 @@ export default {
     },
     isTaskRunning(skuId) {
       return this.timers.some((timer) => timer.skuId === skuId)
+    },
+    addToCart({ skuId, buyNum }) {
+      this.accountList.map(async (account) => {
+        const success = await jd.addGoodsToCart(account.cookie, skuId, buyNum)
+        if (success) {
+          this.$message.success(`商品已加入账号「${account.name}」的购物车`)
+        }
+      })
     }
   },
   destroyed() {

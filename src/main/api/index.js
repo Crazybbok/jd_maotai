@@ -187,8 +187,8 @@ async function addGoodsToCart(Cookie, skuId, num) {
     json: true,
     resolveWithFullResponse: true
   }).then((resp) => {
-    const html = handleResponse(resp)
-    return html.indexOf('成功') > -1
+    const dom = handleResponse(resp)
+    return dom.querySelector('.success-top').innerText.indexOf('成功') > -1
   })
 }
 
@@ -247,14 +247,11 @@ function getItemInfo(skuId) {
     },
     resolveWithFullResponse: true
   }).then((resp) => {
-    const parser = new DOMParser()
-    const html = handleResponse(resp)
-    // 解析返回的HTML代码
-    const dom = parser.parseFromString(html, 'text/html')
+    const dom = handleResponse(resp)
     const pageConfig = dom.querySelectorAll('script')[0].innerText
     const imageSrc = dom.querySelector('#spec-img').dataset.origin
     const name = pageConfig.match(/name: '(.*)'/)[1]
-    const easyBuyUrl = html.match(/easyBuyUrl:"(.*)"/)[1]
+    const easyBuyUrl = pageConfig.match(/easyBuyUrl:"(.*)"/)[1]
     const cat = pageConfig.match(/cat: \[(.*)\]/)[1]
     const venderId = pageConfig.match(/venderId:(\d*)/)[1]
     return {

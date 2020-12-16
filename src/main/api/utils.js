@@ -13,9 +13,16 @@ export const handleResponse = (resp) => {
     log.info('response result:', result)
     return result
   } catch (error) {
-    log.info('response body is not JSON.')
+    try {
+      const parser = new DOMParser()
+      // 解析返回的HTML代码
+      const dom = parser.parseFromString(body, 'text/html')
+      log.info('parser html:', dom)
+      return dom
+    } catch (error) {
+      return body
+    }
   }
-  return body
 }
 
 function parseJson(body) {
