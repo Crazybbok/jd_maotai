@@ -76,7 +76,6 @@ export default {
     showAddTask() {
       this.$refs.addTask.show()
     },
-    // eslint-disable-next-line no-unused-vars
     async createOrders({ skuId, buyNum, taskType, isSetTime, startTime }) {
       this.$notification.open({
         message: '开始抢购',
@@ -89,11 +88,12 @@ export default {
       this.accountList.map((account) => {
         const task = new CountTimer({
           base: new Date(base),
+          // eslint-disable-next-line prettier/prettier
+          begin: isSetTime ? dayjs(startTime).subtract(3, 'minute').toDate() : new Date(),
           end: isSetTime ? new Date(startTime) : new Date(),
           delay: this.delay,
           every: ({ delta2 }) => {
-            log.info(`账号「${account.name}」抢购中，还未到抢购时间`)
-            log.info('倒计时：', delta2)
+            log.info(`账号「${account.name}」抢购中，倒计时：${delta2}`)
           },
           finish: async () => {
             // const base = await jd.getServerTime()
