@@ -28,7 +28,7 @@ export const handleResponse = (resp) => {
 function parseJson(body) {
   if (typeof body === 'string') {
     const match = body.match(/\{(.*)\}/)
-    return match.length ? match[0] : body
+    return match && match.length ? match[0] : body
   }
   return body
 }

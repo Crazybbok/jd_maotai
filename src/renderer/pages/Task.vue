@@ -9,6 +9,9 @@
     <a-button type="primary" class="mg-l10" @click="stopAll">
       停止所有任务
     </a-button>
+    <a-button type="primary" class="mg-l10" @click="testDelay" :loading="delayLoading">
+      测试网络延迟
+    </a-button>
     <a-list item-layout="horizontal" :data-source="taskList">
       <a-list-item slot="renderItem" slot-scope="item">
         <a-list-item-meta :description="`定时：${formatDate(item.startTime)} , 购买数量：${item.buyNum}`">
@@ -33,10 +36,11 @@
 </template>
 <script>
 import { mapGetters } from 'vuex'
+import { CountTimer } from '@/utils'
 import dayjs from 'dayjs'
 import AddTask from './modal/AddTask'
 import MoreActions from '@/components/MoreActions'
-// import log from 'electron-log'
+import log from 'electron-log'
 const jd = window.preload.jd
 // 抢购提示语
 const NOTIFIACTION = {
@@ -56,7 +60,9 @@ export default {
       actions: new Map([
         [1, 'orderSubmit'],
         [2, 'killOrderSubmit']
-      ])
+      ]),
+      delay: 0,
+      delayLoading: false
     }
   },
   computed: {
@@ -70,6 +76,7 @@ export default {
     showAddTask() {
       this.$refs.addTask.show()
     },
+    // eslint-disable-next-line no-unused-vars
     async createOrders({ skuId, buyNum, taskType, isSetTime, startTime }) {
       this.$notification.open({
         message: '开始抢购',
@@ -77,14 +84,25 @@ export default {
         placement: 'bottomRight'
       })
       // 所有账号都加入抢购
+      const base = await jd.getServerTime()
+      log.info('serverTime:', dayjs(base).format('YYYY-MM-DD HH:mm:ss'))
       this.accountList.map((account) => {
-        let task = setInterval(() => {
-          if (!isSetTime || (isSetTime && +Date.now() >= +new Date(startTime))) {
+        const task = new CountTimer({
+          base: new Date(base),
+          end: isSetTime ? new Date(startTime) : new Date(),
+          delay: this.delay,
+          every: ({ delta2 }) => {
+            log.info(`账号「${account.name}」抢购中，还未到抢购时间`)
+            log.info('倒计时：', delta2)
+          },
+          finish: async () => {
+            // const base = await jd.getServerTime()
+            // log.info('delay:', base - startTime)
+            // log.info('serverTime:', dayjs(base).format('YYYY-MM-DD HH:mm:ss'))
             this.createOrder(account, skuId, buyNum, taskType)
-            return
           }
-          this.$message.info(`账号「${account.name}」抢购中，还未到抢购时间`)
-        }, 1000)
+        })
+        task.run()
         this.timers.push({
           pinId: account.pinId,
           skuId,
@@ -115,14 +133,14 @@ export default {
     },
     stopAll() {
       this.timers.map((timer) => {
-        clearInterval(timer.task)
+        timer.task.clear()
       })
       this.timers = []
     },
     stopTaskByAccount(pinId, skuId) {
       this.timers = this.timers.filter((timer) => {
         if (timer.pinId === pinId && timer.skuId === skuId) {
-          clearInterval(timer.task)
+          timer.task.clear()
           return false
         }
         return true
@@ -131,7 +149,7 @@ export default {
     stopTaskBySku(skuId) {
       this.timers = this.timers.filter((timer) => {
         if (timer.skuId === skuId) {
-          clearInterval(timer.task)
+          timer.task.clear()
           return false
         }
         return true
@@ -160,6 +178,28 @@ export default {
           this.$message.success(`商品已加入账号「${account.name}」的购物车`)
         }
       })
+    },
+    async testDelay() {
+      this.delayLoading = true
+      const base = await jd.getServerTime()
+      const task = new CountTimer({
+        base: new Date(base),
+        finish: async () => {
+          task.clear()
+          const base = await jd.getServerTime()
+          this.delay = base - +task.end
+          log.info('delay:', this.delay)
+          log.info('serverTime:', dayjs(base).format('YYYY-MM-DD HH:mm:ss'))
+          log.info('endTime:', dayjs(task.end).format('YYYY-MM-DD HH:mm:ss'))
+          this.delayLoading = false
+          this.$notification.open({
+            message: `网络延迟为${this.delay}ms`,
+            description: '将自动调整定时器的网络延时配置',
+            placement: 'bottomRight'
+          })
+        }
+      })
+      task.run()
     }
   },
   destroyed() {

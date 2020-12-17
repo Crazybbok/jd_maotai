@@ -313,7 +313,8 @@ function getServerTime() {
     uri: URLS.GET_SERVER_TIME,
     resolveWithFullResponse: true
   }).then((resp) => {
-    return handleResponse(resp)
+    const { serverTime } = handleResponse(resp)
+    return serverTime
   })
 }
 
