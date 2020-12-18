@@ -4,7 +4,7 @@ import Router from 'vue-router'
 const MainLayout = () => import('@/layout/MainLayout')
 const Account = () => import('@/pages/Account')
 const Task = () => import('@/pages/Task')
-const Test = () => import('@/pages/Test')
+const Setting = () => import('@/pages/Setting')
 
 Vue.use(Router)
 
@@ -28,9 +28,9 @@ export default new Router({
           component: Task
         },
         {
-          path: 'test',
-          name: 'test',
-          component: Test
+          path: 'setting',
+          name: 'setting',
+          component: Setting
         }
       ]
     },

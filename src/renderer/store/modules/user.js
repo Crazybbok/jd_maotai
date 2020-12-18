@@ -13,18 +13,17 @@ const state = {
    */
   account: {}
 }
+
 const getters = {
   accountList: (state) => {
     let result = []
     for (const key in state.account) {
-      // eslint-disable-next-line no-prototype-builtins
-      if (state.account.hasOwnProperty(key)) {
-        result.push(state.account[key])
-      }
+      result.push(state.account[key])
     }
     return result
   }
 }
+
 const mutations = {
   SAVE_OR_UPDATE(state, { pinId, name, cookie, isLogin, isPlusMember }) {
     const origin = state.account[pinId]
@@ -81,19 +80,16 @@ const actions = {
    */
   async checkAccountList({ state, commit }) {
     for (const key in state.account) {
-      // eslint-disable-next-line no-prototype-builtins
-      if (state.account.hasOwnProperty(key)) {
-        const account = state.account[key]
-        let res = { isLogin: false, isPlusMember: false }
-        try {
-          res = await jd.cookieCheck(account.cookie)
-        } finally {
-          commit('SAVE_OR_UPDATE', {
-            pinId: key,
-            isLogin: res.isLogin,
-            isPlusMember: res.isPlusMember
-          })
-        }
+      const account = state.account[key]
+      let res = { isLogin: false, isPlusMember: false }
+      try {
+        res = await jd.cookieCheck(account.cookie)
+      } finally {
+        commit('SAVE_OR_UPDATE', {
+          pinId: key,
+          isLogin: res.isLogin,
+          isPlusMember: res.isPlusMember
+        })
       }
     }
   }

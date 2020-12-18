@@ -193,6 +193,26 @@ async function addGoodsToCart(Cookie, skuId, num) {
 }
 
 /**
+ * 结算购物车内商品
+ * @param Cookie
+ * @returns {Promise<any>}
+ */
+function clearingGoods(Cookie) {
+  return request({
+    uri: URLS.GET_ORDER,
+    headers: {
+      Cookie,
+      'User-Agent': UserAgent,
+      'Content-Type': ContentType
+    },
+    resolveWithFullResponse: true
+  }).then((resp) => {
+    const data = handleResponse(resp)
+    return !(data instanceof Document)
+  })
+}
+
+/**
  * 提交订单（当前购物车内所有商品）
  * @param Cookie
  * @returns {Promise<any>}
@@ -206,25 +226,6 @@ async function orderSubmit(Cookie) {
     'submitOrderParam.ignorePriceChange': '0',
     'submitOrderParam.btSupport': '0',
     'submitOrderParam.jxj': '1'
-  }
-  // 请求结算页面
-  const orderSuccess = await request({
-    uri: URLS.GET_ORDER,
-    headers: {
-      Cookie,
-      'User-Agent': UserAgent,
-      'Content-Type': ContentType
-    },
-    resolveWithFullResponse: true
-  }).then((resp) => {
-    const data = handleResponse(resp)
-    return !(data instanceof Document)
-  })
-  if (!orderSuccess) {
-    return {
-      success: false,
-      message: '订单提交失败，购物车内没有可提交商品'
-    }
   }
   // 提交订单
   return request({
@@ -280,10 +281,7 @@ function getItemInfo(skuId) {
  * @param buyInfo
  * @returns {Promise<any>}
  */
-async function getItemStock(skuId, buyNum, buyInfo) {
-  // 请求商品详情页
-  const { cat, venderId } = await getItemInfo(skuId)
-  const area = `${buyInfo['addressList'][0]['provinceId']}_${buyInfo['addressList'][0]['cityId']}_${buyInfo['addressList'][0]['countyId']}_${buyInfo['addressList'][0]['townId']}`
+async function getItemStock({ skuId, buyNum, area, cat, venderId }) {
   return request({
     uri: URLS.GET_ITEM_STOCK,
     qs: {
@@ -334,6 +332,7 @@ export default {
   selectAllCart,
   clearCart,
   addGoodsToCart,
+  clearingGoods,
   orderSubmit,
   getItemInfo,
   getItemStock,
