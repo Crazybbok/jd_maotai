@@ -208,7 +208,7 @@ async function orderSubmit(Cookie) {
     'submitOrderParam.jxj': '1'
   }
   // 请求结算页面
-  await request({
+  const orderSuccess = await request({
     uri: URLS.GET_ORDER,
     headers: {
       Cookie,
@@ -216,7 +216,16 @@ async function orderSubmit(Cookie) {
       'Content-Type': ContentType
     },
     resolveWithFullResponse: true
+  }).then((resp) => {
+    const data = handleResponse(resp)
+    return !(data instanceof Document)
   })
+  if (!orderSuccess) {
+    return {
+      success: false,
+      message: '订单提交失败，购物车内没有可提交商品'
+    }
+  }
   // 提交订单
   return request({
     method: 'POST',

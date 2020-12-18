@@ -111,7 +111,10 @@ export default {
       })
     },
     async createOrder(account, skuId, buyNum, taskType) {
-      const buyInfo = await jd.getBuyInfo(account.cookie, skuId, buyNum)
+      let buyInfo = {}
+      if (taskType !== 1) {
+        buyInfo = await jd.getBuyInfo(account.cookie, skuId, buyNum)
+      }
       const submitResult = await jd[this.actions.get(taskType)](account.cookie, skuId, buyNum, buyInfo)
       if (submitResult && submitResult.success) {
         this.stopTaskByAccount(account.pinId, skuId)
