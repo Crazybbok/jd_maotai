@@ -14,6 +14,7 @@
         <a-list-item-meta :description="`定时：${dateformat(item.startTime)} , 购买数量：${item.buyNum}`">
           <a slot="title">{{ item.detail.name }}</a>
           <a-spin slot="avatar" :spinning="isTaskRunning(item.id)">
+            <a-icon slot="indicator" type="loading" spin />
             <a-avatar :src="`http:${item.detail.imageSrc}`" />
           </a-spin>
         </a-list-item-meta>
