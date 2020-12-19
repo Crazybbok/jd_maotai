@@ -13,10 +13,11 @@ const getters = {
 }
 
 const mutations = {
-  SAVE_CONFIG(state, { delay }) {
+  SAVE_CONFIG(state, { delay, area }) {
     const origin = state.config
     let params = { delay }
     params.delay = delay || origin.delay
+    params.area = area || origin.area
     state.config = params
   }
 }

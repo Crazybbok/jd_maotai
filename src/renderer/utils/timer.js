@@ -85,6 +85,7 @@ class CountTimer {
 
   clear() {
     clearInterval(this.timer)
+    this.status = 'stop'
   }
 }
 

@@ -53,6 +53,20 @@ export default {
 }
 </script>
 <style lang="less" scoped>
+.scroll(@width: 7px) {
+  overflow: auto;
+  &::-webkit-scrollbar {
+    width: @width;
+    height: @width;
+  }
+  &::-webkit-scrollbar-track {
+    background-color: rgba(255, 255, 255, 0.6);
+  }
+  &::-webkit-scrollbar-thumb {
+    border-radius: @width;
+    background-color: rgba(0, 0, 0, 0.2);
+  }
+}
 .layout {
   width: 100%;
   height: 100%;
@@ -62,6 +76,8 @@ export default {
     padding: 15px;
     width: 100%;
     height: 100%;
+    overflow: auto;
+    .scroll();
   }
 }
 </style>

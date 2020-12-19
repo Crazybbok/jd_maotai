@@ -1,4 +1,4 @@
-import jd from './main/api'
+import * as jd from './main/api'
 
 process.once('loaded', function() {
   // 这里 process 对象已经可用

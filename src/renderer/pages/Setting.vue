@@ -13,12 +13,31 @@
           </a-button>
         </div>
       </a-form-model-item>
+      <a-form-model-item label="area id">
+        <div>
+          <a-input
+            v-model="formParams.area"
+            @change="saveConfig"
+            style="width: 200px;"
+            placeholder="格式: xx_xx_xx_xx"
+          />
+          <span class="pull-right">收货地址的地区id，用于获取当地库存</span>
+        </div>
+      </a-form-model-item>
     </a-form-model>
+    <!-- <a-table :columns="columns" :data-source="apiList" class="mg-t10" rowKey="name" :pagination="false">
+      <span slot="action" slot-scope="text, record">
+        <a type="link" @click="test(record)">
+          测试接口
+        </a>
+      </span>
+    </a-table> -->
   </div>
 </template>
 <script>
 import { mapGetters } from 'vuex'
 import { CountTimer } from '@/utils'
+import { apiList, testApis } from './methods/testApis'
 import log from 'electron-log'
 const jd = window.preload.jd
 
@@ -29,13 +48,31 @@ export default {
       labelCol: { span: 4 },
       wrapperCol: { span: 18 },
       formParams: {
-        delay: 0
+        delay: 0,
+        area: ''
       },
       formRules: {},
-      delayLoading: false
+      delayLoading: false,
+      apiList,
+      columns: [
+        {
+          title: '接口',
+          dataIndex: 'name',
+          key: 'name'
+        },
+        {
+          title: '操作',
+          width: 100,
+          dataIndex: 'action',
+          key: 'action',
+          scopedSlots: { customRender: 'action' }
+        }
+      ]
     }
   },
   computed: {
+    ...mapGetters('user', ['accountList']),
+    ...mapGetters('task', ['taskList']),
     ...mapGetters('system', ['config'])
   },
   activated() {
@@ -65,6 +102,24 @@ export default {
     saveConfig() {
       log.info('保存系统配置：', this.formParams)
       this.$store.commit('system/SAVE_CONFIG', this.formParams)
+    },
+    async test(row) {
+      const account = this.accountList[0]
+      const task = this.taskList[0]
+      const skuId = task.skuId
+      const buyNum = task.buyNum
+      const buyInfo = await jd.getBuyInfo(account.cookie, skuId, buyNum)
+      const params = {
+        Cookie: account.cookie,
+        skuId,
+        buyNum,
+        buyInfo,
+        area: this.config.area,
+        cat: task.detail.cat,
+        venderId: task.detail.venderId
+      }
+      const result = await testApis(row.name, params)
+      log.info(`接口${row.name}测试结果:`, result)
     }
   }
 }

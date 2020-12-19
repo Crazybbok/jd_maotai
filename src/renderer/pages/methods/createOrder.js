@@ -1,10 +1,17 @@
+/**
+ * 抢购taskType对应的下单操作
+ */
+
 const jd = window.preload.jd
 
-// 预约抢购调用的方法
+/**
+ * 预约抢购商品：
+ * 1.
+ */
 const createReserveOrder = async function(task, account) {
   let result
   // 请求全选购物车内所有商品
-  result = await jd.selectAllCart(account.cookie)
+  result = await jd.cartSelectAll(account.cookie)
   if (!result) {
     return {
       success: false,
@@ -12,7 +19,7 @@ const createReserveOrder = async function(task, account) {
     }
   }
   // 结算购物车内选中的商品
-  result = await jd.clearingGoods(account.cookie)
+  result = await jd.getOrderInfo(account.cookie)
   if (!result) {
     return {
       success: false,
@@ -29,8 +36,8 @@ const createKillOrder = async function(task, account) {
   const { skuId, buyNum } = task
   // 获取商品订单
   const buyInfo = await jd.getBuyInfo(account.cookie, skuId, buyNum)
-  const result = await jd.killOrderSubmit(account.cookie, skuId, buyNum, buyInfo)
-  if (!result.success) {
+  const result = await jd.seckillOrderSubmit(account.cookie, skuId, buyNum, buyInfo)
+  if (!result) {
     return {
       success: false,
       message: '抢购失败，还未到抢购时间'

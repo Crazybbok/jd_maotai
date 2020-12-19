@@ -75,7 +75,7 @@ export default {
       this.$refs.addTask.show()
     },
     async createOrders(task) {
-      const { id, skuId, taskType, isSetTime, startTime } = task
+      const { id, taskType, isSetTime, startTime } = task
       this.$notification.open({
         message: '开始抢购',
         description: NOTIFIACTION[taskType],
@@ -95,13 +95,14 @@ export default {
           end,
           delay: this.config.delay,
           every: ({ delta2 }) => {
-            logger.info(`账号「${account.name}」抢购商品${skuId}中，任务倒计时：${delta2}`)
+            logger.info(`账号「${account.name}」抢购中，任务倒计时：${delta2}`)
           },
           finish: async () => {
-            logger.info(`账号「${account.name}」抢购商品${skuId}中，进行第${trytimes++}尝试`)
+            logger.info(`账号「${account.name}」抢购中，进行第${trytimes++}尝试`)
             const result = await createOrder(task, account)
             if (result.success) {
               this.stopTimer(task.id, account.pinId)
+              logger.info(`恭喜,账号「${account.name}」已抢到，此账号不再参与本轮抢购~`)
               this.$notification.open({
                 message: `恭喜,账号「${account.name}」已抢到`,
                 description: '此账号不再参与本轮抢购~',
@@ -109,6 +110,7 @@ export default {
               })
             } else if (result.resultCode === 600158) {
               this.stopTimer(task.id)
+              logger.info(`商品库存已空，无法继续抢购。已清除当前任务相关的定时器。`)
               this.$notification.open({
                 message: `商品库存已空，无法继续抢购`,
                 description: '已清除当前任务相关的定时器',
@@ -154,7 +156,7 @@ export default {
     },
     addToCart({ skuId, buyNum }) {
       this.accountList.map(async (account) => {
-        const success = await jd.addGoodsToCart(account.cookie, skuId, buyNum)
+        const success = await jd.cartAddGood(account.cookie, skuId, buyNum)
         if (success) {
           this.$message.success(`商品已加入账号「${account.name}」的购物车`)
         } else {

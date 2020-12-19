@@ -19,9 +19,11 @@ export default {
 </script>
 <style lang="less">
 .ant-dropdown-menu-item {
+  padding: 0px;
   a {
     display: block;
     width: auto;
+    padding: 5px 12px;
   }
 }
 </style>

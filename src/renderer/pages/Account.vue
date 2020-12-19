@@ -6,7 +6,7 @@
     <a-button type="primary" class="mg-l10" @click="clear">
       清空账号
     </a-button>
-    <a-table :columns="columns" :data-source="accountList" class="mg-t10" rowKey="uid">
+    <a-table :columns="columns" :data-source="accountList" class="mg-t10" rowKey="pinId">
       <span slot="isLogin" slot-scope="text, record">
         {{ record.isLogin ? '已登录' : '未登录' }}
       </span>

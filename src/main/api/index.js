@@ -15,7 +15,7 @@ const ContentType = 'application/x-www-form-urlencoded'
  * @param Cookie
  * @returns {Promise<{isLogin: boolean}|{isLogin: boolean, isPlusMember: boolean}>}
  */
-function cookieCheck(Cookie) {
+export function cookieCheck(Cookie) {
   return request({
     uri: URLS.CHECK_ACCOUNT,
     headers: {
@@ -34,21 +34,47 @@ function cookieCheck(Cookie) {
 }
 
 /**
- * 获取下单信息
- * @param Cookie
- * @param sku
- * @param num
+ * 获取秒杀订单URL
+ * @param skuId
  * @returns {Promise<any>}
  */
-function getBuyInfo(Cookie, sku, num) {
+export function getSeckillUrl(skuId) {
+  return request({
+    uri: URLS.GET_SECKILL_URL,
+    headers: {
+      'User-Agent': UserAgent,
+      Host: 'itemko.jd.com',
+      Referer: `https://item.jd.com/${skuId}.html`
+    },
+    qs: {
+      callback: `jQuery${getRandomArbitrary(1000000, 9999999)}`,
+      skuId,
+      from: 'pc',
+      _: +new Date()
+    },
+    json: true,
+    resolveWithFullResponse: true
+  }).then((resp) => {
+    return handleResponse(resp)
+  })
+}
+
+/**
+ * 获取下单信息
+ * @param Cookie
+ * @param skuId
+ * @param buyNum
+ * @returns {Promise<any>}
+ */
+export function getBuyInfo(Cookie, skuId, buyNum) {
   const params = {
-    sku,
-    num,
+    sku: skuId,
+    num: buyNum,
     isModifyAddress: false
   }
   return request({
     method: 'POST',
-    uri: URLS.GET_BUY_INFO,
+    uri: URLS.GET_SECKILL_GOOD_INFO,
     form: params,
     headers: {
       Cookie,
@@ -65,14 +91,14 @@ function getBuyInfo(Cookie, sku, num) {
  * 提交秒杀订单
  * @param Cookie
  * @param skuId
- * @param num
+ * @param buyNum
  * @param buyInfo
  * @returns {Promise<any>}
  */
-function killOrderSubmit(Cookie, skuId, num, buyInfo) {
+export function seckillOrderSubmit(Cookie, skuId, buyNum, buyInfo) {
   const params = {
     skuId,
-    num,
+    num: buyNum,
     addressId: buyInfo['addressList'][0]['id'],
     yuShou: true,
     isModifyAddress: false,
@@ -107,7 +133,7 @@ function killOrderSubmit(Cookie, skuId, num, buyInfo) {
   }
   return request({
     method: 'POST',
-    uri: URLS.KILL_ORDER_SUBMIT,
+    uri: URLS.SECKILL_ORDER_SUBMIT,
     form: params,
     headers: {
       Cookie,
@@ -116,18 +142,22 @@ function killOrderSubmit(Cookie, skuId, num, buyInfo) {
     },
     resolveWithFullResponse: true
   }).then((resp) => {
-    return handleResponse(resp)
+    const data = handleResponse(resp)
+    if (data instanceof Document) {
+      return false
+    }
+    return data
   })
 }
 
 /**
  * 全选购物车中的商品
  * @param Cookie
- * @returns {Promise<any>}
+ * @returns {Promise<boolean>}
  */
-function selectAllCart(Cookie) {
+export function cartSelectAll(Cookie) {
   return request({
-    uri: URLS.SELECT_ALL,
+    uri: URLS.CART_SELECT_ALL,
     headers: {
       Cookie,
       'User-Agent': UserAgent
@@ -145,11 +175,11 @@ function selectAllCart(Cookie) {
 /**
  * 清空购物车
  * @param Cookie
- * @returns {Promise<any>}
+ * @returns {Promise<boolean>}
  */
-function clearCart(Cookie) {
+export function cartClearAll(Cookie) {
   return request({
-    uri: URLS.CLEAR_ALL,
+    uri: URLS.CART_CLEAR_ALL,
     headers: {
       Cookie,
       'User-Agent': UserAgent
@@ -168,15 +198,15 @@ function clearCart(Cookie) {
  * 添加商品到购物车
  * @param Cookie
  * @param skuId
- * @param num
- * @returns {Promise<any>}
+ * @param buyNum
+ * @returns {Promise<boolean>}
  */
-async function addGoodsToCart(Cookie, skuId, num) {
+export function cartAddGood(Cookie, skuId, buyNum) {
   return request({
-    uri: URLS.ADD_ITEM,
+    uri: URLS.CART_ADD_GOOD,
     qs: {
       pid: skuId,
-      pcount: num,
+      pcount: buyNum,
       ptype: 1
     },
     headers: {
@@ -195,11 +225,11 @@ async function addGoodsToCart(Cookie, skuId, num) {
 /**
  * 结算购物车内商品
  * @param Cookie
- * @returns {Promise<any>}
+ * @returns {Promise<boolean>}
  */
-function clearingGoods(Cookie) {
+export function getOrderInfo(Cookie) {
   return request({
-    uri: URLS.GET_ORDER,
+    uri: URLS.GET_ORDER_INFO,
     headers: {
       Cookie,
       'User-Agent': UserAgent,
@@ -217,7 +247,7 @@ function clearingGoods(Cookie) {
  * @param Cookie
  * @returns {Promise<any>}
  */
-async function orderSubmit(Cookie) {
+export function orderSubmit(Cookie) {
   const params = {
     overseaPurchaseCookies: '',
     vendorRemarks: '[]',
@@ -230,7 +260,7 @@ async function orderSubmit(Cookie) {
   // 提交订单
   return request({
     method: 'POST',
-    uri: URLS.SUBMIT_ORDER,
+    uri: URLS.ORDER_SUBMIT,
     form: params,
     headers: {
       Cookie,
@@ -249,7 +279,7 @@ async function orderSubmit(Cookie) {
  * @param skuId
  * @returns {Promise<any>}
  */
-function getItemInfo(skuId) {
+export function getGoodInfo(skuId) {
   return request({
     uri: `https://item.jd.com/${skuId}.html`,
     headers: {
@@ -279,11 +309,11 @@ function getItemInfo(skuId) {
  * @param skuId
  * @param buyNum
  * @param buyInfo
- * @returns {Promise<any>}
+ * @returns {Promise<boolean>}
  */
-async function getItemStock({ skuId, buyNum, area, cat, venderId }) {
+export function getGoodStock(skuId, buyNum, area, cat, venderId) {
   return request({
-    uri: URLS.GET_ITEM_STOCK,
+    uri: URLS.GET_GOOD_STOCK,
     qs: {
       skuId,
       buyNum,
@@ -315,7 +345,7 @@ async function getItemStock({ skuId, buyNum, area, cat, venderId }) {
  * 查询京东服务器时间
  * @returns {Promise<any>}
  */
-function getServerTime() {
+export function getServerTime() {
   return request({
     uri: URLS.GET_SERVER_TIME,
     resolveWithFullResponse: true
@@ -323,18 +353,4 @@ function getServerTime() {
     const { serverTime } = handleResponse(resp)
     return serverTime
   })
-}
-
-export default {
-  cookieCheck,
-  getBuyInfo,
-  killOrderSubmit,
-  selectAllCart,
-  clearCart,
-  addGoodsToCart,
-  clearingGoods,
-  orderSubmit,
-  getItemInfo,
-  getItemStock,
-  getServerTime
 }

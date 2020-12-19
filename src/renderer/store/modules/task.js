@@ -60,7 +60,7 @@ const actions = {
    */
   async addTask({ commit }, { skuId, taskType, isSetTime, startTime, buyNum }) {
     const id = uuid()
-    const detail = await jd.getItemInfo(skuId)
+    const detail = await jd.getGoodInfo(skuId)
     commit('SAVE_OR_UPDATE', {
       id,
       skuId,
@@ -80,7 +80,7 @@ const actions = {
   async checkTaskList({ state, commit }) {
     for (const key in state.task) {
       const task = state.task[key]
-      const detail = await jd.getItemInfo(task.skuId)
+      const detail = await jd.getGoodInfo(task.skuId)
       commit('SAVE_OR_UPDATE', {
         id: key,
         detail
