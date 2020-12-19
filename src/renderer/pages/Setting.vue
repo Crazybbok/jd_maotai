@@ -108,18 +108,20 @@ export default {
       const task = this.taskList[0]
       const skuId = task.skuId
       const buyNum = task.buyNum
-      const buyInfo = await jd.getBuyInfo(account.cookie, skuId, buyNum)
+      let buyInfo = {}
+      if (row.name === 'seckillOrderSubmit') {
+        buyInfo = await jd.getBuyInfo(account.cookie, skuId, buyNum)
+      }
       const params = {
         Cookie: account.cookie,
         skuId,
         buyNum,
-        buyInfo,
         area: this.config.area,
         cat: task.detail.cat,
-        venderId: task.detail.venderId
+        venderId: task.detail.venderId,
+        buyInfo
       }
-      const result = await testApis(row.name, params)
-      log.info(`接口${row.name}测试结果:`, result)
+      await testApis(row.name, params)
     }
   }
 }

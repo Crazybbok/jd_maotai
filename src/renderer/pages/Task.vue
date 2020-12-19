@@ -100,28 +100,35 @@ export default {
           delay: this.config.delay,
           frep: taskType === 3 ? frep : 500,
           every: ({ delta2 }) => {
-            taskLogger.info(`账号「${account.name}」抢购中，任务倒计时：${delta2}`)
+            const message = `账号「${account.name}」抢购中，任务倒计时：${delta2}`
+            taskLogger.info(message)
           },
           finish: async () => {
-            taskLogger.info(`账号「${account.name}」抢购中，进行第${trytimes++}尝试`)
+            const message = `账号「${account.name}」抢购中，进行第${trytimes++}尝试`
+            taskLogger.info(message)
             const result = await createOrder(task, account)
             if (result.success) {
               this.stopTimer(task.id, account.pinId)
-              taskLogger.info(`恭喜,账号「${account.name}」已抢到，此账号不再参与本轮抢购~`)
+              const message = `恭喜,账号「${account.name}」已抢到`
+              const description = `此账号不再参与本轮抢购~`
+              taskLogger.info(`${message}，${description}`)
               this.$notification.open({
-                message: `恭喜,账号「${account.name}」已抢到`,
-                description: '此账号不再参与本轮抢购~',
+                message,
+                description,
                 placement: 'bottomRight'
               })
             } else if (result.resultCode === 600158) {
               this.stopTimer(task.id)
-              taskLogger.info(`商品库存已空，无法继续抢购。已清除当前任务相关的定时器。`)
+              const message = `商品库存已空，无法继续抢购`
+              const description = `已清除当前任务相关的定时器`
+              taskLogger.info(`${message}，${description}`)
               this.$notification.open({
-                message: `商品库存已空，无法继续抢购`,
-                description: '已清除当前任务相关的定时器',
+                message,
+                description,
                 placement: 'bottomRight'
               })
             } else {
+              taskLogger.info(result.message)
               this.$message.info(result.message)
             }
           }

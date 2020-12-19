@@ -7,23 +7,24 @@ export const getRandomArbitrary = (min, max) => {
 
 export const handleResponse = (resp) => {
   const { body, statusCode, request } = resp
-  logger.info(`接口 ${request.href} 请求结果：${statusCode}`)
-  let result = parseJson(body)
+  let result = body
   try {
-    result = JSON.parse(result)
-    logger.info('response result:', result)
-    return result
+    result = JSON.parse(parseJson(body))
   } catch (error) {
     if (typeof body === 'string' && body.indexOf('DOCTYPE') > -1) {
       const parser = new DOMParser()
       // 解析返回的HTML代码
-      const dom = parser.parseFromString(body, 'text/html')
-      logger.info('parser html:', dom)
-      return dom
+      result = parser.parseFromString(body, 'text/html')
     }
-    logger.info('response result:', body)
-    return body
   }
+  const isSuc = statusCode === 200
+  // request logs
+  logger.info(
+    `${request.href} %c${isSuc ? 'Success' : 'Failed'}:`,
+    `color: ${isSuc ? 'green' : 'red'}`,
+    isSuc ? result : statusCode
+  )
+  return result
 }
 
 function parseJson(body) {

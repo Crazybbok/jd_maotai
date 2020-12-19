@@ -166,7 +166,7 @@ export function cartSelectAll(Cookie) {
   }).then((resp) => {
     const result = handleResponse(resp)
     if (result && result.sortedWebCartResult) {
-      return result.sortedWebCartResult.success
+      return result.sortedWebCartResult
     }
     return false
   })
@@ -188,7 +188,7 @@ export function cartClearAll(Cookie) {
   }).then((resp) => {
     const result = handleResponse(resp)
     if (result && result.sortedWebCartResult) {
-      return result.sortedWebCartResult.success
+      return result.sortedWebCartResult
     }
     return false
   })
