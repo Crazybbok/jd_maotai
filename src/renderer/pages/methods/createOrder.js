@@ -1,7 +1,6 @@
 /* eslint-disable no-unused-vars */
 import $store from '@/store'
 
-console.log($store)
 /**
  * 抢购taskType对应的下单操作
  */

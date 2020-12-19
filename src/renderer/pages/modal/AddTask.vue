@@ -80,7 +80,7 @@ export default {
         taskType: [{ required: true, message: '必填' }],
         startTime: [{ required: true, message: '必填' }],
         skuId: [{ required: true, message: '必填' }],
-        frep: [{ pattern: /^[0-9]*?$/, message: '请填入整数' }]
+        frep: [{ pattern: /^[0-9]*?$/, required: true, message: '请填入整数' }]
       },
       confirmLoading: false,
       taskMap
