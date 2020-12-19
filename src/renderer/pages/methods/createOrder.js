@@ -8,8 +8,9 @@ import $store from '@/store'
 const jd = window.preload.jd
 
 /**
- * 预约抢购商品：
- * 1.
+ * 预约抢购商品
+ * 1.点击抢购会加入购物车中，在购物车中无法选中
+ * 2.到时间才可以选中提交结算
  */
 const createReserveOrder = async function(task, account) {
   let result
@@ -34,7 +35,10 @@ const createReserveOrder = async function(task, account) {
   return result
 }
 
-// 秒杀商品调用的方法
+/**
+ * 秒杀
+ * 1.直接提交订单，但是目前没有找到合适的商品测试过
+ */
 const createKillOrder = async function(task, account) {
   const { skuId, buyNum } = task
   // 获取商品订单
@@ -49,7 +53,10 @@ const createKillOrder = async function(task, account) {
   return result
 }
 
-// 查询库存自动下单功能
+/**
+ * 查询库存自动下单
+ * 1.查询库存，满足有库存以及低于预期价格时，会加到购物车中结算
+ */
 const getStockAndOrder = async function(task, account) {
   const { skuId, buyNum } = task
   const { cat, venderId } = task.detail
@@ -76,8 +83,17 @@ const getStockAndOrder = async function(task, account) {
       }
     }
   }
-  // 清空购物车,防止有其他可提交商品
+
   let result
+  // 请求全选购物车内所有商品
+  result = await jd.cartSelectAll(account.cookie)
+  if (!result) {
+    return {
+      success: false,
+      message: '全选购物车失败'
+    }
+  }
+  // 清空购物车,防止有其他可提交商品（需要全选之后才可以清空）
   result = await jd.cartClearAll(account.cookie)
   if (!result) {
     return {
