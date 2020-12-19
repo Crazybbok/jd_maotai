@@ -20,5 +20,7 @@ export default {
   // 获取商品库存
   GET_GOOD_STOCK: 'https://c0.3.cn/stock',
   // 获取京东服务器时间
-  GET_SERVER_TIME: 'https://a.jd.com//ajax/queryServerData.html'
+  GET_SERVER_TIME: 'https://a.jd.com//ajax/queryServerData.html',
+  // 获取商品价格
+  GET_GOOD_PRICE: 'http://p.3.cn/prices/mgets'
 }

@@ -1,12 +1,31 @@
 import dayjs from 'dayjs'
 const noop = function() {}
 
+const multiple = {
+  s: 1000,
+  m: 60 * 1000,
+  h: 60 * 60 * 1000,
+  d: 24 * 60 * 60 * 1000
+}
+
 const getDuration = function(time) {
   const daysRound = Math.floor(time / 1000 / 60 / 60 / 24)
   const hoursRound = Math.floor(time / 1000 / 60 / 60 - 24 * daysRound)
   const minutesRound = Math.floor(time / 1000 / 60 - 24 * 60 * daysRound - 60 * hoursRound)
   const seconds = Math.floor(time / 1000 - 24 * 60 * 60 * daysRound - 60 * 60 * hoursRound - 60 * minutesRound)
   return `${hoursRound}:${minutesRound}:${seconds}`
+}
+
+const formatFrep = function(frep) {
+  const isN = Number.isNaN(+frep)
+  if (!isN) {
+    return frep
+  }
+  const match = frep.match(/(\d*)(s|m|h|d)$/)
+  if (!match || match.length < 3) {
+    throw new Error('frep format error')
+  }
+  return match[1] * multiple[match[2]]
 }
 
 class CountTimer {
@@ -32,6 +51,8 @@ class CountTimer {
     this.end = new Date(Math.floor(this.end / 1000) * 1000)
     // 大概的网络延迟
     this.delay = this.opt.delay || 0
+    // 刷新频率
+    this.frep = formatFrep(this.opt.frep || 500)
 
     // 不同阶段的回调
     this.first = this.opt.first || noop
@@ -80,7 +101,7 @@ class CountTimer {
     this.timer = setInterval(() => {
       const now = new Date()
       this.status = this.check(now)
-    }, 500)
+    }, this.frep)
   }
 
   clear() {

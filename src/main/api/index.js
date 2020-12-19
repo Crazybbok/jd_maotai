@@ -143,7 +143,7 @@ export function seckillOrderSubmit(Cookie, skuId, buyNum, buyInfo) {
     resolveWithFullResponse: true
   }).then((resp) => {
     const data = handleResponse(resp)
-    if (data instanceof Document) {
+    if (data.indexOf('https://marathon.jd.com/koFail.html') > -1) {
       return false
     }
     return data
@@ -352,5 +352,24 @@ export function getServerTime() {
   }).then((resp) => {
     const { serverTime } = handleResponse(resp)
     return serverTime
+  })
+}
+
+export function getGoodPrice(skuId) {
+  return request({
+    uri: URLS.GET_GOOD_PRICE,
+    qs: {
+      type: 1,
+      pduid: +new Date(),
+      skuIds: 'J_' + skuId
+    },
+    resolveWithFullResponse: true,
+    json: true
+  }).then((resp) => {
+    const data = handleResponse(resp)
+    if (data && data.length) {
+      return data[0].p
+    }
+    return null
   })
 }

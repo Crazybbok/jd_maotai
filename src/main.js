@@ -5,6 +5,7 @@ import App from '@/App.vue'
 import Antd from 'ant-design-vue'
 import 'ant-design-vue/dist/antd.css'
 import '@/styles/index.less'
+import '@/filters'
 
 global.vbus = new Vue()
 Vue.config.productionTip = false

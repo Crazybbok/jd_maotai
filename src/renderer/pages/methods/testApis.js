@@ -13,7 +13,8 @@ const apiMap = new Map([
   ['orderSubmit', ['Cookie']],
   ['getGoodInfo', ['skuId']],
   ['getGoodStock', ['skuId', 'buyNum', 'area', 'cat', 'venderId']],
-  ['getServerTime', []]
+  ['getServerTime', []],
+  ['getGoodPrice', ['skuId']]
 ])
 
 export const apiList = [...apiMap.keys()].map((name) => {
@@ -28,6 +29,7 @@ export function testApis(name, obj) {
     get(obj, get(params, 0)),
     get(obj, get(params, 1)),
     get(obj, get(params, 2)),
-    get(obj, get(params, 3))
+    get(obj, get(params, 3)),
+    get(obj, get(params, 4))
   )
 }

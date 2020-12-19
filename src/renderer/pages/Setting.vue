@@ -17,9 +17,9 @@
         <div>
           <a-input
             v-model="formParams.area"
-            @change="saveConfig"
             style="width: 200px;"
             placeholder="格式: xx_xx_xx_xx"
+            @change="saveConfig"
           />
           <span class="pull-right">收货地址的地区id，用于获取当地库存</span>
         </div>

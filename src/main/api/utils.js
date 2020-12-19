@@ -14,15 +14,15 @@ export const handleResponse = (resp) => {
     logger.info('response result:', result)
     return result
   } catch (error) {
-    try {
+    if (typeof body === 'string' && body.indexOf('DOCTYPE') > -1) {
       const parser = new DOMParser()
       // 解析返回的HTML代码
       const dom = parser.parseFromString(body, 'text/html')
       logger.info('parser html:', dom)
       return dom
-    } catch (error) {
-      return body
     }
+    logger.info('response result:', body)
+    return body
   }
 }
 

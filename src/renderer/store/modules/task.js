@@ -27,21 +27,14 @@ const getters = {
 }
 
 const mutations = {
-  SAVE_OR_UPDATE(state, { id, skuId, taskType, isSetTime, startTime, buyNum, detail }) {
-    const origin = state.task[id]
-    let params = { id, skuId, taskType, isSetTime, startTime, buyNum, detail }
-    params.id = id || origin.id
-    params.skuId = skuId || origin.skuId
-    params.taskType = taskType || origin.taskType
-    params.buyNum = buyNum || origin.buyNum
-    params.detail = detail || origin.detail
-    if (isSetTime === undefined) {
-      params.isSetTime = origin.isSetTime
+  SAVE_OR_UPDATE(state, params) {
+    const { id } = params
+    const origin = state.task[id] || {}
+    const newParams = {
+      ...origin,
+      ...params
     }
-    if (params.isSetTime) {
-      params.startTime = startTime || origin.startTime
-    }
-    Vue.set(state.task, id, params)
+    Vue.set(state.task, id, newParams)
   },
   REMOVE(state, id) {
     Vue.delete(state.task, id)
@@ -58,17 +51,13 @@ const actions = {
    * @param form
    * @returns {Promise<void>}
    */
-  async addTask({ commit }, { skuId, taskType, isSetTime, startTime, buyNum }) {
+  async addTask({ commit }, params) {
     const id = uuid()
-    const detail = await jd.getGoodInfo(skuId)
+    const detail = await jd.getGoodInfo(params.skuId)
     commit('SAVE_OR_UPDATE', {
       id,
-      skuId,
-      taskType,
-      isSetTime,
-      startTime,
-      buyNum,
-      detail
+      detail,
+      ...params
     })
   },
   /**

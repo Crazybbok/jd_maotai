@@ -1,3 +1,7 @@
+/* eslint-disable no-unused-vars */
+import $store from '@/store'
+
+console.log($store)
 /**
  * 抢购taskType对应的下单操作
  */
@@ -46,9 +50,59 @@ const createKillOrder = async function(task, account) {
   return result
 }
 
+// 查询库存自动下单功能
+const getStockAndOrder = async function(task, account) {
+  const { skuId, buyNum } = task
+  const { cat, venderId } = task.detail
+  const area = $store.getters['system/config'].area
+  if (!area) {
+    return {
+      success: false,
+      message: '未配置area id，无法获取库存情况'
+    }
+  }
+  const hasStock = await jd.getGoodStock(skuId, buyNum, area, cat, venderId)
+  if (!hasStock) {
+    return {
+      success: false,
+      message: '库存为空，无法购买'
+    }
+  }
+  if (task.price) {
+    const price = await jd.getGoodPrice(skuId)
+    if (price && task.price < +price) {
+      return {
+        succsee: false,
+        message: `当前价格为${price}，超出期望价格`
+      }
+    }
+  }
+  // 清空购物车,防止有其他可提交商品
+  let result
+  result = await jd.cartClearAll(account.cookie)
+  if (!result) {
+    return {
+      success: false,
+      message: '清空购物车失败'
+    }
+  }
+  // 将商品加入购物车
+  result = await jd.cartAddGood(account.cookie, skuId, buyNum)
+  if (!result) {
+    return {
+      success: false,
+      message: '加入购物车失败'
+    }
+  }
+  // 下单
+  result = await createReserveOrder(task, account)
+  return result
+}
+
 const createOrderMap = new Map([
   [1, createReserveOrder],
-  [2, createKillOrder]
+  [2, createKillOrder],
+  [3, getStockAndOrder]
 ])
 
 const createOrder = function(task, account) {

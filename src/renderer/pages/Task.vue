@@ -11,7 +11,12 @@
     </a-button>
     <a-list item-layout="horizontal" :data-source="taskList">
       <a-list-item slot="renderItem" slot-scope="item">
-        <a-list-item-meta :description="`定时：${dateformat(item.startTime)} , 购买数量：${item.buyNum}`">
+        <a-list-item-meta>
+          <div slot="description">
+            <span class="desc">任务类型: {{ taskMap.get(item.taskType).text }}</span>
+            <span class="desc">定时: {{ item.startTime | dateformat }}</span>
+            <span class="desc">购买数量: {{ item.buyNum }}</span>
+          </div>
           <a slot="title">{{ item.detail.name }}</a>
           <a-spin slot="avatar" :spinning="isTaskRunning(item.id)">
             <a-icon slot="indicator" type="loading" spin />
@@ -36,19 +41,15 @@
 </template>
 <script>
 import { mapGetters } from 'vuex'
-import { CountTimer, dateformat } from '@/utils'
+import { CountTimer } from '@/utils'
 import { Logger } from '~/utils'
+import { taskMap } from './const'
 import dayjs from 'dayjs'
 import AddTask from './modal/AddTask'
 import createOrder from './methods/createOrder'
 import MoreActions from '@/components/MoreActions'
 const logger = new Logger('task').getInstance()
 const jd = window.preload.jd
-// 抢购提示语
-const NOTIFIACTION = {
-  1: '该商品是预约抢购商品，需要自行加入到购物车，并确保购物车里不含其他可提交商品',
-  2: '该商品是秒杀商品，会自动提交订单'
-}
 
 export default {
   name: 'Task',
@@ -58,7 +59,8 @@ export default {
   },
   data() {
     return {
-      timers: []
+      timers: [],
+      taskMap
     }
   },
   computed: {
@@ -70,15 +72,14 @@ export default {
     this.$store.dispatch('task/checkTaskList')
   },
   methods: {
-    dateformat,
     showAddTask() {
       this.$refs.addTask.show()
     },
     async createOrders(task) {
-      const { id, taskType, isSetTime, startTime } = task
+      const { id, taskType, isSetTime, startTime, frep } = task
       this.$notification.open({
         message: '开始抢购',
-        description: NOTIFIACTION[taskType],
+        description: this.taskMap.get(taskType).message,
         placement: 'bottomRight'
       })
       // eslint-disable-next-line prettier/prettier
@@ -87,6 +88,7 @@ export default {
       const basetime = await jd.getServerTime()
       let trytimes = 1
       logger.info('服务器时间:', dayjs(basetime).format('YYYY-MM-DD HH:mm:ss'))
+      const taskLogger = logger.scope(this.taskMap.get(taskType).text)
       // 所有账号都加入抢购
       this.accountList.map((account) => {
         const count = new CountTimer({
@@ -94,15 +96,16 @@ export default {
           begin,
           end,
           delay: this.config.delay,
+          frep: taskType === 3 ? frep : 500,
           every: ({ delta2 }) => {
-            logger.info(`账号「${account.name}」抢购中，任务倒计时：${delta2}`)
+            taskLogger.info(`账号「${account.name}」抢购中，任务倒计时：${delta2}`)
           },
           finish: async () => {
-            logger.info(`账号「${account.name}」抢购中，进行第${trytimes++}尝试`)
+            taskLogger.info(`账号「${account.name}」抢购中，进行第${trytimes++}尝试`)
             const result = await createOrder(task, account)
             if (result.success) {
               this.stopTimer(task.id, account.pinId)
-              logger.info(`恭喜,账号「${account.name}」已抢到，此账号不再参与本轮抢购~`)
+              taskLogger.info(`恭喜,账号「${account.name}」已抢到，此账号不再参与本轮抢购~`)
               this.$notification.open({
                 message: `恭喜,账号「${account.name}」已抢到`,
                 description: '此账号不再参与本轮抢购~',
@@ -110,7 +113,7 @@ export default {
               })
             } else if (result.resultCode === 600158) {
               this.stopTimer(task.id)
-              logger.info(`商品库存已空，无法继续抢购。已清除当前任务相关的定时器。`)
+              taskLogger.info(`商品库存已空，无法继续抢购。已清除当前任务相关的定时器。`)
               this.$notification.open({
                 message: `商品库存已空，无法继续抢购`,
                 description: '已清除当前任务相关的定时器',
@@ -171,3 +174,11 @@ export default {
   }
 }
 </script>
+<style lang="less" scoped>
+.desc {
+  &:not(:first-child)::before {
+    content: '|';
+    margin: 0 8px;
+  }
+}
+</style>
