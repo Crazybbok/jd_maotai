@@ -16,6 +16,7 @@
             <span class="desc">任务类型: {{ taskMap.get(item.taskType).text }}</span>
             <span class="desc" v-if="[1, 2].includes(item.taskType)">定时: {{ item.startTime | dateformat }}</span>
             <span class="desc" v-if="item.taskType === 3">频率: {{ item.frep }}</span>
+            <span class="desc" v-if="item.taskType === 3">期望价格: ${{ item.price || '-' }}</span>
             <span class="desc">购买数量: {{ item.buyNum }}</span>
           </div>
           <a slot="title">{{ item.detail.name }}</a>

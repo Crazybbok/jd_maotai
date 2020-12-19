@@ -41,7 +41,7 @@
             </a-select>
           </a-input>
         </a-form-model-item>
-        <a-form-model-item label="预期价格">
+        <a-form-model-item label="期望价格">
           <a-input-number :min="0" v-model="formParams.price" />
           <span>元</span>
           <span class="pull-right">不填默认不校验价格自动下单</span>
