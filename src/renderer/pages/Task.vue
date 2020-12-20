@@ -44,15 +44,14 @@
 </template>
 <script>
 import { mapGetters } from 'vuex'
+import { shell } from 'electron'
 import { CountTimer } from '@/utils'
-import { Logger } from '~/utils'
 import { taskMap } from './const'
 import dayjs from 'dayjs'
+import MoreActions from '@/components/MoreActions'
 import AddTask from './modal/AddTask'
 import createOrder from './methods/createOrder'
-import MoreActions from '@/components/MoreActions'
-import { shell } from 'electron'
-const logger = new Logger('task').getInstance()
+
 const jd = window.preload.jd
 
 export default {
@@ -95,9 +94,15 @@ export default {
       this.accountList.map(async (account) => {
         const success = await jd.cartAddGood(account.cookie, skuId, buyNum)
         if (success) {
-          this.$message.success(`商品已加入账号「${account.name}」的购物车`)
+          this.logger_message.success({
+            message: `商品已加入账号「${account.name}」的购物车`,
+            label: skuId
+          })
         } else {
-          this.$message.error(`商品加入账号「${account.name}」的购物车失败`)
+          this.logger_message.error({
+            message: `商品加入账号「${account.name}」的购物车失败`,
+            label: skuId
+          })
         }
       })
     },
@@ -121,19 +126,22 @@ export default {
       })
     },
     async createOrders(task) {
-      const { id, taskType, isSetTime, startTime, frep, unit } = task
-      this.$notification.open({
+      const { id, skuId, taskType, isSetTime, startTime, frep, unit } = task
+      this.logger_notification.info({
         message: '开始抢购',
-        description: this.taskMap.get(taskType).message,
-        placement: 'bottomRight'
+        description: this.taskMap.get(taskType).desc,
+        label: skuId
       })
       // eslint-disable-next-line prettier/prettier
       const begin = isSetTime ? dayjs(startTime).subtract(10, 'minute').toDate() : new Date() // 提前十分钟开始打日志
       const end = isSetTime ? new Date(startTime) : new Date()
       const basetime = await jd.getServerTime()
+      this.logger_message.info({
+        message: `服务器时间: ${dayjs(basetime).format('YYYY-MM-DD HH:mm:ss')}`,
+        label: skuId
+      })
+
       let trytimes = 1
-      logger.info('服务器时间:', dayjs(basetime).format('YYYY-MM-DD HH:mm:ss'))
-      const taskLogger = logger.scope(this.taskMap.get(taskType).text)
       // 所有账号都加入抢购
       this.accountList.map((account) => {
         const count = new CountTimer({
@@ -146,52 +154,47 @@ export default {
             // 倒计时开始的时候校验登录状态并提示
             const { isLogin } = await jd.cookieCheck(account.cookie)
             if (!isLogin) {
-              const message = `账号「${account.name}」登录已失效，请尽快重新登录，避免影响抢购`
-              taskLogger.info(message)
-              this.$message.error(message)
+              this.logger_message.error({
+                message: `账号「${account.name}」登录已失效，请尽快重新登录，避免影响抢购`,
+                label: skuId
+              })
             }
           },
           every: ({ delta2 }) => {
-            const message = `账号「${account.name}」抢购中，任务倒计时：${delta2}`
-            taskLogger.info(message)
+            this.logger_message.info({
+              message: `账号「${account.name}」抢购中，任务倒计时：${delta2}`,
+              label: skuId
+            })
           },
           finish: async () => {
-            const message = `账号「${account.name}」抢购中，进行第${trytimes++}尝试`
-            taskLogger.info(message)
+            this.logger_message.info({
+              message: `账号「${account.name}」抢购中，进行第${trytimes++}尝试`,
+              label: skuId
+            })
             const result = await createOrder(task, account)
             if (result.success) {
               this.stopTimer(task.id, account.pinId)
-              const message = `恭喜,账号「${account.name}」已抢到`
-              const description = `此账号不再参与本轮抢购~`
-              taskLogger.info(`${message}，${description}`)
-              this.$notification.open({
-                message,
-                description,
-                placement: 'bottomRight'
+              this.logger_notification.success({
+                message: `恭喜,账号「${account.name}」已抢到`,
+                description: `此账号不再参与本轮抢购~`,
+                label: skuId
               })
             } else if (result.resultCode === 600158) {
               this.stopTimer(task.id)
-              const message = `商品库存已空，无法继续抢购`
-              const description = `已清除当前任务相关的定时器`
-              taskLogger.info(`${message}，${description}`)
-              this.$notification.open({
-                message,
-                description,
-                placement: 'bottomRight'
+              this.logger_notification.error({
+                message: `商品库存已空，无法继续抢购`,
+                description: `已清除当前任务相关的定时器`,
+                label: skuId
               })
             } else {
-              taskLogger.info(result.message)
-              this.$message.error(result.message)
+              this.logger_message.error({ message: result.message, label: skuId })
               // 判断是否要自动停止任务
               if (this.config.trytimes && trytimes > this.config.trytimes && [1, 2].includes(taskType)) {
                 this.stopTimer(task.id)
-                const message = `抢购失败`
-                const description = `当前尝试次数已超过${this.config.trytimes}。自动停止当前任务。`
-                taskLogger.info(`${message}，${description}`)
-                this.$notification.open({
-                  message,
-                  description,
-                  placement: 'bottomRight'
+                this.logger_notification.error({
+                  message: `抢购失败`,
+                  description: `当前尝试次数已超过${this.config.trytimes}。自动停止当前任务。`,
+                  label: skuId
                 })
               }
             }
@@ -208,7 +211,10 @@ export default {
   },
   destroyed() {
     this.stopAll()
-    this.$message.info('定时器已全部清空')
+    this.logger_message.info({
+      message: '定时器已全部清空',
+      label: 'global'
+    })
   }
 }
 </script>

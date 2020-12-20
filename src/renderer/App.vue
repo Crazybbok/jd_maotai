@@ -16,11 +16,17 @@ export default {
       global.vbus.$on('global.$message.success', (msg) => {
         this.$message.success(msg)
       })
+      global.vbus.$on('global.$message.info', (msg) => {
+        this.$message.info(msg)
+      })
       global.vbus.$on('global.$message.destroy', () => {
         this.$message.destroy()
       })
       global.vbus.$on('global.$notification.open', (opt) => {
-        this.$notification.open(opt)
+        this.$notification.open({
+          ...opt,
+          placement: 'bottomRight'
+        })
       })
     }
   },
