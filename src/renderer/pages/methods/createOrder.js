@@ -49,7 +49,7 @@ const createReserveOrder = async function(task, account) {
     }
   }
   // 购物车里的商品没有当前商品
-  if (result.allSkuIds.indexOf(task.skuId) < 0) {
+  if (!result.allSkuIds || result.allSkuIds.indexOf(task.skuId) < 0) {
     result = await clearAndAddGood(task, account)
     return {
       success: false,

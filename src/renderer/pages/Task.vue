@@ -138,6 +138,15 @@ export default {
           end,
           delay: this.config.delay,
           frep: taskType === 3 ? frep + unit : 500,
+          first: async () => {
+            // 倒计时开始的时候校验登录状态并提示
+            const { isLogin } = await jd.cookieCheck(account.cookie)
+            if (!isLogin) {
+              const message = `账号「${account.name}」登录已失效，请尽快重新登录，避免影响抢购`
+              taskLogger.info(message)
+              this.$message.error(message)
+            }
+          },
           every: ({ delta2 }) => {
             const message = `账号「${account.name}」抢购中，任务倒计时：${delta2}`
             taskLogger.info(message)
@@ -168,7 +177,7 @@ export default {
               })
             } else {
               taskLogger.info(result.message)
-              this.$message.info(result.message)
+              this.$message.error(result.message)
               // 判断是否要自动停止任务
               if (this.config.trytimes && trytimes > this.config.trytimes && [1, 2].includes(taskType)) {
                 this.stopTimer(task.id)
