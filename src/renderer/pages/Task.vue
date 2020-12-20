@@ -19,7 +19,7 @@
             <span class="desc" v-if="item.taskType === 3">期望价格: ${{ item.price || '-' }}</span>
             <span class="desc">购买数量: {{ item.buyNum }}</span>
           </div>
-          <a slot="title">{{ item.detail.name }}</a>
+          <a slot="title" @click="openExternal(item.skuId)">{{ item.detail.name }}</a>
           <a-spin slot="avatar" :spinning="isTaskRunning(item.id)">
             <a-icon slot="indicator" type="loading" spin />
             <a-avatar :src="`http:${item.detail.imageSrc}`" />
@@ -51,6 +51,7 @@ import dayjs from 'dayjs'
 import AddTask from './modal/AddTask'
 import createOrder from './methods/createOrder'
 import MoreActions from '@/components/MoreActions'
+import { shell } from 'electron'
 const logger = new Logger('task').getInstance()
 const jd = window.preload.jd
 
@@ -86,6 +87,9 @@ export default {
     },
     clearAll() {
       this.$store.commit('task/CLEAR_ALL')
+    },
+    openExternal(skuId) {
+      shell.openExternal(`https://item.jd.com/${skuId}.html`)
     },
     addToCart({ skuId, buyNum }) {
       this.accountList.map(async (account) => {
