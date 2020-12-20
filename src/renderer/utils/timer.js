@@ -1,4 +1,5 @@
 import dayjs from 'dayjs'
+import setPromiseInterval, { clearPromiseInterval } from './setPromiseInterval'
 const noop = function() {}
 
 const multiple = {
@@ -64,11 +65,11 @@ class CountTimer {
     this.firstTriggered = false
   }
 
-  check(now) {
+  async check(now) {
     now = new Date(+now - +this.basenow + +this.base + this.delay)
 
     if (!this.firstTriggered && now >= this.begin && now < this.end) {
-      this.first({
+      await this.first({
         delta1: getDuration(now - this.begin), // 开始了多久
         delta2: getDuration(this.end - now + 1000), // 距离结束还有多久
         now: now // 当前时间
@@ -77,7 +78,7 @@ class CountTimer {
     }
 
     if (now >= this.begin && now < this.end) {
-      this.every({
+      await this.every({
         delta1: getDuration(now - this.begin), // 开始了多久
         delta2: getDuration(this.end - now + 1000), // 距离结束还有多久
         now: now // 当前时间
@@ -87,7 +88,7 @@ class CountTimer {
     }
 
     if (now >= this.end) {
-      this.finish({
+      await this.finish({
         delta1: getDuration(now - this.end + 1000) // 结束了多久
       })
 
@@ -98,14 +99,14 @@ class CountTimer {
   }
 
   run() {
-    this.timer = setInterval(() => {
+    this.timer = setPromiseInterval(async () => {
       const now = new Date()
-      this.status = this.check(now)
+      this.status = await this.check(now)
     }, this.frep)
   }
 
   clear() {
-    clearInterval(this.timer)
+    clearPromiseInterval(this.timer)
     this.status = 'stop'
   }
 }
