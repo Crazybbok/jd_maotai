@@ -8,6 +8,32 @@ import $store from '@/store'
 const jd = window.preload.jd
 
 /**
+ * 清空购物车后加入商品
+ */
+const clearAndAddGood = async function(task, account) {
+  let result
+  // 请求全选购物车内所有商品
+  result = await jd.cartSelectAll(account.cookie)
+  if (!result.success) {
+    return {
+      success: false,
+      message: '全选购物车失败'
+    }
+  }
+  // 清空购物车,防止有其他可提交商品（需要全选之后才可以清空）
+  result = await jd.cartClearAll(account.cookie)
+  if (!result.success) {
+    return {
+      success: false,
+      message: '清空购物车失败'
+    }
+  }
+  // 将商品加入购物车
+  result = await jd.cartAddGood(account.cookie, task.skuId, task.buyNum)
+  return result
+}
+
+/**
  * 预约抢购商品
  * 1.点击抢购会加入购物车中，在购物车中无法选中
  * 2.到时间才可以选中提交结算
@@ -16,10 +42,25 @@ const createReserveOrder = async function(task, account) {
   let result
   // 请求全选购物车内所有商品
   result = await jd.cartSelectAll(account.cookie)
-  if (!result) {
+  if (!result.success) {
     return {
       success: false,
       message: '全选购物车失败'
+    }
+  }
+  // 购物车里的商品没有当前商品
+  if (result.allSkuIds.indexOf(task.skuId) < -1) {
+    result = await clearAndAddGood(task, account)
+    return {
+      success: false,
+      message: `购物车内无当前商品，自动加入。加入${result ? '成功' : '失败'}`
+    }
+  }
+  // 判断已选的结果中是否包含当前商品
+  if (!result.ids || result.ids.indexOf(task.skuId) < -1) {
+    return {
+      success: false,
+      message: '当前商品无法选中，可能还未开始抢购'
     }
   }
   // 结算购物车内选中的商品
@@ -27,7 +68,7 @@ const createReserveOrder = async function(task, account) {
   if (!result) {
     return {
       success: false,
-      message: '提交结算失败，购物车内没有可以提交的商品'
+      message: '提交结算失败'
     }
   }
   // 提交订单
@@ -85,30 +126,8 @@ const getStockAndOrder = async function(task, account) {
   }
 
   let result
-  // 请求全选购物车内所有商品
-  result = await jd.cartSelectAll(account.cookie)
-  if (!result) {
-    return {
-      success: false,
-      message: '全选购物车失败'
-    }
-  }
-  // 清空购物车,防止有其他可提交商品（需要全选之后才可以清空）
-  result = await jd.cartClearAll(account.cookie)
-  if (!result) {
-    return {
-      success: false,
-      message: '清空购物车失败'
-    }
-  }
-  // 将商品加入购物车
-  result = await jd.cartAddGood(account.cookie, skuId, buyNum)
-  if (!result) {
-    return {
-      success: false,
-      message: '加入购物车失败'
-    }
-  }
+  // 清空购物车后加入商品
+  result = await clearAndAddGood(task, account)
   // 下单
   result = await createReserveOrder(task, account)
   return result

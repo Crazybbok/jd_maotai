@@ -59,7 +59,6 @@
 <script>
 import { mapGetters } from 'vuex'
 import { taskMap } from '../const'
-import { omit } from 'lodash'
 export default {
   name: 'AddTask',
   data() {
@@ -95,9 +94,8 @@ export default {
       this.$refs.form.validate((valid) => {
         if (valid) {
           this.$store.dispatch('task/addTask', {
-            ...omit(this.formParams, ['unit']),
-            startTime: this.formParams.isSetTime ? this.formParams.startTime : null,
-            frep: this.formParams.frep + this.formParams.unit
+            ...this.formParams,
+            startTime: this.formParams.isSetTime ? this.formParams.startTime : null
           })
           this.$message.success('任务已添加！')
           this.handleCancel()
@@ -114,7 +112,12 @@ export default {
       this.formParams.isSetTime = value !== 3
     },
     // public methods
-    show() {
+    show(formParams) {
+      if (formParams) {
+        this.formParams = {
+          ...formParams
+        }
+      }
       this.visible = true
     },
     hide() {

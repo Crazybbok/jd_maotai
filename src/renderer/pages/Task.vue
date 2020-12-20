@@ -15,7 +15,7 @@
           <div slot="description">
             <span class="desc">任务类型: {{ taskMap.get(item.taskType).text }}</span>
             <span class="desc" v-if="[1, 2].includes(item.taskType)">定时: {{ item.startTime | dateformat }}</span>
-            <span class="desc" v-if="item.taskType === 3">频率: {{ item.frep }}</span>
+            <span class="desc" v-if="item.taskType === 3">频率: {{ item.frep + item.unit }}</span>
             <span class="desc" v-if="item.taskType === 3">期望价格: ${{ item.price || '-' }}</span>
             <span class="desc">购买数量: {{ item.buyNum }}</span>
           </div>
@@ -34,6 +34,7 @@
         <!-- 更多 -->
         <more-actions slot="actions">
           <a @click="addToCart(item)">加入购物车</a>
+          <a @click="editTask(item)">修改任务</a>
           <a @click="deleteTask(item.id)">删除任务</a>
         </more-actions>
       </a-list-item>
@@ -77,8 +78,46 @@ export default {
     showAddTask() {
       this.$refs.addTask.show()
     },
+    stopAll() {
+      this.timers.map((timer) => {
+        timer.count.clear()
+      })
+      this.timers = []
+    },
+    clearAll() {
+      this.$store.commit('task/CLEAR_ALL')
+    },
+    addToCart({ skuId, buyNum }) {
+      this.accountList.map(async (account) => {
+        const success = await jd.cartAddGood(account.cookie, skuId, buyNum)
+        if (success) {
+          this.$message.success(`商品已加入账号「${account.name}」的购物车`)
+        } else {
+          this.$message.error(`商品加入账号「${account.name}」的购物车失败`)
+        }
+      })
+    },
+    editTask(item) {
+      this.$refs.addTask.show(item)
+    },
+    deleteTask(taskId) {
+      this.stopTimer(taskId)
+      this.$store.commit('task/REMOVE', taskId)
+    },
+    isTaskRunning(taskId) {
+      return this.timers.some((timer) => timer.taskId === taskId)
+    },
+    stopTimer(taskId, pinId) {
+      this.timers = this.timers.filter((timer) => {
+        if (timer.taskId === taskId && (!pinId || timer.pinId === pinId)) {
+          timer.count.clear()
+          return false
+        }
+        return true
+      })
+    },
     async createOrders(task) {
-      const { id, taskType, isSetTime, startTime, frep } = task
+      const { id, taskType, isSetTime, startTime, frep, unit } = task
       this.$notification.open({
         message: '开始抢购',
         description: this.taskMap.get(taskType).message,
@@ -98,7 +137,7 @@ export default {
           begin,
           end,
           delay: this.config.delay,
-          frep: taskType === 3 ? frep : 500,
+          frep: taskType === 3 ? frep + unit : 500,
           every: ({ delta2 }) => {
             const message = `账号「${account.name}」抢购中，任务倒计时：${delta2}`
             taskLogger.info(message)
@@ -130,6 +169,18 @@ export default {
             } else {
               taskLogger.info(result.message)
               this.$message.info(result.message)
+              // 判断是否要自动停止任务
+              if (this.config.trytimes && trytimes > this.config.trytimes && [1, 2].includes(taskType)) {
+                this.stopTimer(task.id)
+                const message = `抢购失败`
+                const description = `当前尝试次数已超过${this.config.trytimes}。自动停止当前任务。`
+                taskLogger.info(`${message}，${description}`)
+                this.$notification.open({
+                  message,
+                  description,
+                  placement: 'bottomRight'
+                })
+              }
             }
           }
         })
@@ -139,41 +190,6 @@ export default {
           taskId: id,
           count
         })
-      })
-    },
-    stopAll() {
-      this.timers.map((timer) => {
-        timer.count.clear()
-      })
-      this.timers = []
-    },
-    stopTimer(taskId, pinId) {
-      this.timers = this.timers.filter((timer) => {
-        if (timer.taskId === taskId && (!pinId || timer.pinId === pinId)) {
-          timer.count.clear()
-          return false
-        }
-        return true
-      })
-    },
-    deleteTask(taskId) {
-      this.stopTimer(taskId)
-      this.$store.commit('task/REMOVE', taskId)
-    },
-    clearAll() {
-      this.$store.commit('task/CLEAR_ALL')
-    },
-    isTaskRunning(taskId) {
-      return this.timers.some((timer) => timer.taskId === taskId)
-    },
-    addToCart({ skuId, buyNum }) {
-      this.accountList.map(async (account) => {
-        const success = await jd.cartAddGood(account.cookie, skuId, buyNum)
-        if (success) {
-          this.$message.success(`商品已加入账号「${account.name}」的购物车`)
-        } else {
-          this.$message.error(`商品加入账号「${account.name}」的购物车失败`)
-        }
       })
     }
   },

@@ -13,6 +13,13 @@
           </a-button>
         </div>
       </a-form-model-item>
+      <a-form-model-item label="重试次数">
+        <div>
+          <a-input-number :min="0" v-model="formParams.trytimes" @change="saveConfig" />
+          <span>次</span>
+          <span class="pull-right">配置失败多少次之后自动停止任务(仅限预约抢购和秒杀)</span>
+        </div>
+      </a-form-model-item>
       <a-form-model-item label="area id">
         <div>
           <a-input
@@ -49,6 +56,7 @@ export default {
       wrapperCol: { span: 18 },
       formParams: {
         delay: 0,
+        trytimes: 0,
         area: ''
       },
       formRules: {},
