@@ -117,6 +117,17 @@ export default {
         this.formParams = {
           ...formParams
         }
+      } else {
+        // 重置
+        this.formParams = {
+          taskType: 1,
+          isSetTime: true,
+          startTime: null,
+          skuId: '',
+          buyNum: 1,
+          frep: 10,
+          unit: 'm'
+        }
       }
       this.visible = true
     },
