@@ -25,18 +25,14 @@ const getters = {
 }
 
 const mutations = {
-  SAVE_OR_UPDATE(state, { pinId, name, cookie, isLogin, isPlusMember }) {
-    const origin = state.account[pinId]
-    let params = { pinId, name, cookie, isLogin, isPlusMember }
-    params.name = name || origin.name
-    params.cookie = cookie || origin.cookie
-    if (isLogin === undefined) {
-      params.isLogin = origin.isLogin
+  SAVE_OR_UPDATE(state, params) {
+    const { pinId } = params
+    const origin = state.account[pinId] || {}
+    const newParams = {
+      ...origin,
+      ...params
     }
-    if (isPlusMember === undefined) {
-      params.isPlusMember = origin.isPlusMember
-    }
-    Vue.set(state.account, pinId, params)
+    Vue.set(state.account, pinId, newParams)
   },
   REMOVE(state, pinId) {
     Vue.delete(state.account, pinId)

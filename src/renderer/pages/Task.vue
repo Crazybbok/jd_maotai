@@ -201,9 +201,22 @@ export default {
 </script>
 <style lang="less" scoped>
 .desc {
-  &:not(:first-child)::before {
-    content: '|';
-    margin: 0 8px;
+  position: relative;
+  padding: 0 8px;
+  &:first-child {
+    padding-left: 0;
+  }
+  &:not(:last-child) {
+    &::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      right: 0;
+      width: 1px;
+      height: 14px;
+      margin-top: -7px;
+      background-color: #e8e8e8;
+    }
   }
 }
 </style>

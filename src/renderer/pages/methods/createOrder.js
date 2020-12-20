@@ -42,6 +42,7 @@ const createReserveOrder = async function(task, account) {
   let result
   // 请求全选购物车内所有商品
   result = await jd.cartSelectAll(account.cookie)
+  console.log(result)
   if (!result.success) {
     return {
       success: false,
@@ -49,7 +50,7 @@ const createReserveOrder = async function(task, account) {
     }
   }
   // 购物车里的商品没有当前商品
-  if (result.allSkuIds.indexOf(task.skuId) < -1) {
+  if (result.allSkuIds.indexOf(task.skuId) < 0) {
     result = await clearAndAddGood(task, account)
     return {
       success: false,
@@ -57,7 +58,7 @@ const createReserveOrder = async function(task, account) {
     }
   }
   // 判断已选的结果中是否包含当前商品
-  if (!result.ids || result.ids.indexOf(task.skuId) < -1) {
+  if (!result.ids || result.ids.indexOf(task.skuId) < 0) {
     return {
       success: false,
       message: '当前商品无法选中，可能还未开始抢购'
@@ -72,7 +73,7 @@ const createReserveOrder = async function(task, account) {
     }
   }
   // 提交订单
-  result = await jd.orderSubmit(account.cookie)
+  result = await jd.orderSubmit(account)
   return result
 }
 

@@ -3,7 +3,7 @@
  */
 import request from 'request-promise'
 import URLS from './url'
-import { handleResponse, getRandomArbitrary } from './utils'
+import { handleResponse, getRandomArbitrary, encryptPayPassword } from './utils'
 // import log from 'electron-log'
 
 const UserAgent =
@@ -247,7 +247,7 @@ export function getOrderInfo(Cookie) {
  * @param Cookie
  * @returns {Promise<any>}
  */
-export function orderSubmit(Cookie) {
+export function orderSubmit(account) {
   const params = {
     overseaPurchaseCookies: '',
     vendorRemarks: '[]',
@@ -255,7 +255,12 @@ export function orderSubmit(Cookie) {
     'submitOrderParam.trackID': 'TestTrackId',
     'submitOrderParam.ignorePriceChange': '0',
     'submitOrderParam.btSupport': '0',
-    'submitOrderParam.jxj': '1'
+    'submitOrderParam.jxj': '1',
+    'submitOrderParam.eid': account.eid || '',
+    'submitOrderParam.fp': account.fp || '',
+    ...(account.payPassword && {
+      'submitOrderParam.payPassword': encryptPayPassword(account.payPassword)
+    })
   }
   // 提交订单
   return request({
@@ -263,7 +268,7 @@ export function orderSubmit(Cookie) {
     uri: URLS.ORDER_SUBMIT,
     form: params,
     headers: {
-      Cookie,
+      Cookie: account.cookie,
       'User-Agent': UserAgent,
       Host: 'trade.jd.com',
       Referer: 'http://trade.jd.com/shopping/order/getOrderInfo.action'

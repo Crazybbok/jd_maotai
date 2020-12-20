@@ -5,6 +5,13 @@ export const getRandomArbitrary = (min, max) => {
   return Math.floor(Math.random() * (max - min) + min)
 }
 
+export const encryptPayPassword = (value) => {
+  return value
+    .split('')
+    .map((item) => 'u3' + item)
+    .join('')
+}
+
 export const handleResponse = (resp) => {
   const { body, statusCode, request } = resp
   let result = body
