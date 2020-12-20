@@ -1,5 +1,5 @@
 <template>
-  <a-modal title="添加任务" :visible="visible" :confirm-loading="confirmLoading" @ok="handleOk" @cancel="handleCancel">
+  <a-modal :title="title" :visible="visible" :confirm-loading="confirmLoading" @ok="handleOk" @cancel="handleCancel">
     <a-form-model ref="form" :model="formParams" :rules="formRules" :label-col="labelCol" :wrapper-col="wrapperCol">
       <a-form-model-item label="抢购类型" prop="taskType">
         <a-select v-model="formParams.taskType" @change="handleTaskTypeChange">
@@ -48,7 +48,7 @@
         </a-form-model-item>
       </template>
       <a-form-model-item label="商品ID" prop="skuId">
-        <a-input v-model="formParams.skuId" />
+        <a-input v-model="formParams.skuId" :disabled="isEdit" />
       </a-form-model-item>
       <a-form-model-item label="购买数量" prop="buyNum">
         <a-input-number :min="1" v-model="formParams.buyNum" />
@@ -66,6 +66,7 @@ export default {
       visible: false,
       labelCol: { span: 4 },
       wrapperCol: { span: 18 },
+      isEdit: false,
       formParams: {
         taskType: 1,
         isSetTime: true,
@@ -86,7 +87,10 @@ export default {
     }
   },
   computed: {
-    ...mapGetters('user', ['accountList'])
+    ...mapGetters('user', ['accountList']),
+    title() {
+      return this.isEdit ? '修改任务' : '添加任务'
+    }
   },
   methods: {
     handleOk() {
@@ -114,11 +118,13 @@ export default {
     // public methods
     show(formParams) {
       if (formParams) {
+        this.isEdit = true
         this.formParams = {
           ...formParams
         }
       } else {
         // 重置
+        this.isEdit = false
         this.formParams = {
           taskType: 1,
           isSetTime: true,
