@@ -42,7 +42,6 @@ const createReserveOrder = async function(task, account) {
   let result
   // 请求全选购物车内所有商品
   result = await jd.cartSelectAll(account.cookie)
-  console.log(result)
   if (!result.success) {
     return {
       success: false,
