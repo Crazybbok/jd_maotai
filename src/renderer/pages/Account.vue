@@ -6,7 +6,7 @@
     <a-button type="primary" class="mg-l10" @click="clear">
       清空账号
     </a-button>
-    <a-table :columns="columns" :data-source="accountList" class="mg-t10" rowKey="uid">
+    <a-table :columns="columns" :data-source="accountList" class="mg-t10" rowKey="pinId">
       <span slot="isLogin" slot-scope="text, record">
         {{ record.isLogin ? '已登录' : '未登录' }}
       </span>
@@ -14,20 +14,26 @@
         {{ record.isPlusMember ? '是' : '否' }}
       </span>
       <span slot="action" slot-scope="text, record">
-        <a type="link" @click="deleteAccount(record)">
+        <a type="link" class="actions" @click="deleteAccount(record)">
           删除
+        </a>
+        <a type="link" class="actions" @click="configAccount(record)">
+          配置
         </a>
       </span>
     </a-table>
+    <AccountConfig ref="config" />
   </div>
 </template>
 <script>
 import { mapGetters } from 'vuex'
+import AccountConfig from './modal/AccountConfig'
 const { BrowserWindow } = require('electron').remote
 export default {
   name: 'account',
-  components: {},
-  props: {},
+  components: {
+    AccountConfig
+  },
   data() {
     return {
       columns: [
@@ -94,9 +100,33 @@ export default {
     clear() {
       this.$store.commit('user/CLEAR_ALL')
     },
-    deleteAccount(row) {
-      this.$store.commit('user/REMOVE', row.pinId)
+    deleteAccount(record) {
+      this.$store.commit('user/REMOVE', record.pinId)
+    },
+    configAccount(record) {
+      this.$refs.config.show(record)
     }
   }
 }
 </script>
+<style lang="less" scoped>
+.actions {
+  position: relative;
+  padding: 0 8px;
+  &:first-child {
+    padding-left: 0;
+  }
+  &:not(:last-child) {
+    &::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      right: 0;
+      width: 1px;
+      height: 14px;
+      margin-top: -7px;
+      background-color: #e8e8e8;
+    }
+  }
+}
+</style>

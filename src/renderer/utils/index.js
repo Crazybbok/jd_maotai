@@ -1,9 +1,5 @@
-const files = require.context('.', false, /\.js$/)
-const modules = {}
+import CountTimer from './timer'
+import uuid from './uuid'
+import dateformat from './dateformat'
 
-files.keys().forEach((key) => {
-  if (key === './index.js') return
-  modules[key.replace(/(\.\/|\.js)/g, '')] = files(key).default
-})
-
-export default modules
+export { CountTimer, uuid, dateformat }

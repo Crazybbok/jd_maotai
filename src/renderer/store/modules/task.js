@@ -1,4 +1,5 @@
 import Vue from 'vue'
+import { uuid } from '@/utils'
 
 const jd = window.preload.jd
 
@@ -14,36 +15,29 @@ const state = {
    */
   task: {}
 }
+
 const getters = {
   taskList: (state) => {
     let result = []
     for (const key in state.task) {
-      // eslint-disable-next-line no-prototype-builtins
-      if (state.task.hasOwnProperty(key)) {
-        result.push(state.task[key])
-      }
+      result.push(state.task[key])
     }
     return result
   }
 }
+
 const mutations = {
-  SAVE_OR_UPDATE(state, { skuId, taskType, isSetTime, startTime, buyNum, detail }) {
-    const origin = state.task[skuId]
-    let params = { skuId, taskType, isSetTime, startTime, buyNum, detail }
-    params.skuId = skuId || origin.skuId
-    params.taskType = taskType || origin.taskType
-    params.buyNum = buyNum || origin.buyNum
-    params.detail = detail || origin.detail
-    if (isSetTime === undefined) {
-      params.isSetTime = origin.isSetTime
+  SAVE_OR_UPDATE(state, params) {
+    const { id } = params
+    const origin = state.task[id] || {}
+    const newParams = {
+      ...origin,
+      ...params
     }
-    if (params.isSetTime) {
-      params.startTime = startTime || origin.startTime
-    }
-    Vue.set(state.task, skuId, params)
+    Vue.set(state.task, id, newParams)
   },
-  REMOVE(state, skuId) {
-    Vue.delete(state.task, skuId)
+  REMOVE(state, id) {
+    Vue.delete(state.task, id)
   },
   CLEAR_ALL(state) {
     state.task = {}
@@ -57,15 +51,13 @@ const actions = {
    * @param form
    * @returns {Promise<void>}
    */
-  async addTask({ commit }, { skuId, taskType, isSetTime, startTime, buyNum }) {
-    const detail = await jd.getItemInfo(skuId)
+  async addTask({ commit }, params) {
+    const id = uuid()
+    const detail = await jd.getGoodInfo(params.skuId)
     commit('SAVE_OR_UPDATE', {
-      skuId,
-      taskType,
-      isSetTime,
-      startTime,
-      buyNum,
-      detail
+      id,
+      detail,
+      ...params
     })
   },
   /**
@@ -76,14 +68,12 @@ const actions = {
    */
   async checkTaskList({ state, commit }) {
     for (const key in state.task) {
-      // eslint-disable-next-line no-prototype-builtins
-      if (state.task.hasOwnProperty(key)) {
-        const detail = await jd.getItemInfo(key)
-        commit('SAVE_OR_UPDATE', {
-          skuId: key,
-          detail
-        })
-      }
+      const task = state.task[key]
+      const detail = await jd.getGoodInfo(task.skuId)
+      commit('SAVE_OR_UPDATE', {
+        id: key,
+        detail
+      })
     }
   }
 }

@@ -4,7 +4,35 @@
 
 <script>
 export default {
-  name: 'App'
+  name: 'App',
+  methods: {
+    attachEvents() {
+      global.vbus.$on('global.$message.error', (msg) => {
+        this.$message.error({
+          content: msg,
+          duration: 3
+        })
+      })
+      global.vbus.$on('global.$message.success', (msg) => {
+        this.$message.success(msg)
+      })
+      global.vbus.$on('global.$message.info', (msg) => {
+        this.$message.info(msg)
+      })
+      global.vbus.$on('global.$message.destroy', () => {
+        this.$message.destroy()
+      })
+      global.vbus.$on('global.$notification.open', (opt) => {
+        this.$notification.open({
+          ...opt,
+          placement: 'bottomRight'
+        })
+      })
+    }
+  },
+  created() {
+    this.attachEvents()
+  }
 }
 </script>
 

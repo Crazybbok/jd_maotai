@@ -3,7 +3,7 @@
  */
 import request from 'request-promise'
 import URLS from './url'
-import { handleResponse, getRandomArbitrary } from './utils'
+import { handleResponse, getRandomArbitrary, encryptPayPassword } from './utils'
 // import log from 'electron-log'
 
 const UserAgent =
@@ -15,7 +15,7 @@ const ContentType = 'application/x-www-form-urlencoded'
  * @param Cookie
  * @returns {Promise<{isLogin: boolean}|{isLogin: boolean, isPlusMember: boolean}>}
  */
-function cookieCheck(Cookie) {
+export function cookieCheck(Cookie) {
   return request({
     uri: URLS.CHECK_ACCOUNT,
     headers: {
@@ -34,21 +34,47 @@ function cookieCheck(Cookie) {
 }
 
 /**
- * 获取下单信息
- * @param Cookie
- * @param sku
- * @param num
+ * 获取秒杀订单URL
+ * @param skuId
  * @returns {Promise<any>}
  */
-function getBuyInfo(Cookie, sku, num) {
+export function getSeckillUrl(skuId) {
+  return request({
+    uri: URLS.GET_SECKILL_URL,
+    headers: {
+      'User-Agent': UserAgent,
+      Host: 'itemko.jd.com',
+      Referer: `https://item.jd.com/${skuId}.html`
+    },
+    qs: {
+      callback: `jQuery${getRandomArbitrary(1000000, 9999999)}`,
+      skuId,
+      from: 'pc',
+      _: +new Date()
+    },
+    json: true,
+    resolveWithFullResponse: true
+  }).then((resp) => {
+    return handleResponse(resp)
+  })
+}
+
+/**
+ * 获取下单信息
+ * @param Cookie
+ * @param skuId
+ * @param buyNum
+ * @returns {Promise<any>}
+ */
+export function getBuyInfo(Cookie, skuId, buyNum) {
   const params = {
-    sku,
-    num,
+    sku: skuId,
+    num: buyNum,
     isModifyAddress: false
   }
   return request({
     method: 'POST',
-    uri: URLS.GET_BUY_INFO,
+    uri: URLS.GET_SECKILL_GOOD_INFO,
     form: params,
     headers: {
       Cookie,
@@ -65,14 +91,14 @@ function getBuyInfo(Cookie, sku, num) {
  * 提交秒杀订单
  * @param Cookie
  * @param skuId
- * @param num
+ * @param buyNum
  * @param buyInfo
  * @returns {Promise<any>}
  */
-function killOrderSubmit(Cookie, skuId, num, buyInfo) {
+export function seckillOrderSubmit(Cookie, skuId, buyNum, buyInfo) {
   const params = {
     skuId,
-    num,
+    num: buyNum,
     addressId: buyInfo['addressList'][0]['id'],
     yuShou: true,
     isModifyAddress: false,
@@ -107,7 +133,7 @@ function killOrderSubmit(Cookie, skuId, num, buyInfo) {
   }
   return request({
     method: 'POST',
-    uri: URLS.KILL_ORDER_SUBMIT,
+    uri: URLS.SECKILL_ORDER_SUBMIT,
     form: params,
     headers: {
       Cookie,
@@ -116,18 +142,22 @@ function killOrderSubmit(Cookie, skuId, num, buyInfo) {
     },
     resolveWithFullResponse: true
   }).then((resp) => {
-    return handleResponse(resp)
+    const data = handleResponse(resp)
+    if (data.indexOf('https://marathon.jd.com/koFail.html') > -1) {
+      return false
+    }
+    return data
   })
 }
 
 /**
  * 全选购物车中的商品
  * @param Cookie
- * @returns {Promise<any>}
+ * @returns {Promise<boolean>}
  */
-function selectAllCart(Cookie) {
+export function cartSelectAll(Cookie) {
   return request({
-    uri: URLS.SELECT_ALL,
+    uri: URLS.CART_SELECT_ALL,
     headers: {
       Cookie,
       'User-Agent': UserAgent
@@ -136,7 +166,7 @@ function selectAllCart(Cookie) {
   }).then((resp) => {
     const result = handleResponse(resp)
     if (result && result.sortedWebCartResult) {
-      return result.sortedWebCartResult.success
+      return result.sortedWebCartResult
     }
     return false
   })
@@ -145,11 +175,11 @@ function selectAllCart(Cookie) {
 /**
  * 清空购物车
  * @param Cookie
- * @returns {Promise<any>}
+ * @returns {Promise<boolean>}
  */
-function clearCart(Cookie) {
+export function cartClearAll(Cookie) {
   return request({
-    uri: URLS.CLEAR_ALL,
+    uri: URLS.CART_CLEAR_ALL,
     headers: {
       Cookie,
       'User-Agent': UserAgent
@@ -158,7 +188,7 @@ function clearCart(Cookie) {
   }).then((resp) => {
     const result = handleResponse(resp)
     if (result && result.sortedWebCartResult) {
-      return result.sortedWebCartResult.success
+      return result.sortedWebCartResult
     }
     return false
   })
@@ -168,15 +198,15 @@ function clearCart(Cookie) {
  * 添加商品到购物车
  * @param Cookie
  * @param skuId
- * @param num
- * @returns {Promise<any>}
+ * @param buyNum
+ * @returns {Promise<boolean>}
  */
-async function addGoodsToCart(Cookie, skuId, num) {
+export function cartAddGood(Cookie, skuId, buyNum) {
   return request({
-    uri: URLS.ADD_ITEM,
+    uri: URLS.CART_ADD_GOOD,
     qs: {
       pid: skuId,
-      pcount: num,
+      pcount: buyNum,
       ptype: 1
     },
     headers: {
@@ -187,8 +217,28 @@ async function addGoodsToCart(Cookie, skuId, num) {
     json: true,
     resolveWithFullResponse: true
   }).then((resp) => {
-    const html = handleResponse(resp)
-    return html.indexOf('成功') > -1
+    const dom = handleResponse(resp)
+    return dom.querySelector('.success-top').innerText.indexOf('成功') > -1
+  })
+}
+
+/**
+ * 结算购物车内商品
+ * @param Cookie
+ * @returns {Promise<boolean>}
+ */
+export function getOrderInfo(Cookie) {
+  return request({
+    uri: URLS.GET_ORDER_INFO,
+    headers: {
+      Cookie,
+      'User-Agent': UserAgent,
+      'Content-Type': ContentType
+    },
+    resolveWithFullResponse: true
+  }).then((resp) => {
+    const data = handleResponse(resp)
+    return !(data instanceof Document)
   })
 }
 
@@ -197,7 +247,7 @@ async function addGoodsToCart(Cookie, skuId, num) {
  * @param Cookie
  * @returns {Promise<any>}
  */
-async function orderSubmit(Cookie) {
+export function orderSubmit(account) {
   const params = {
     overseaPurchaseCookies: '',
     vendorRemarks: '[]',
@@ -205,25 +255,20 @@ async function orderSubmit(Cookie) {
     'submitOrderParam.trackID': 'TestTrackId',
     'submitOrderParam.ignorePriceChange': '0',
     'submitOrderParam.btSupport': '0',
-    'submitOrderParam.jxj': '1'
+    'submitOrderParam.jxj': '1',
+    'submitOrderParam.eid': account.eid || '',
+    'submitOrderParam.fp': account.fp || '',
+    ...(account.payPassword && {
+      'submitOrderParam.payPassword': encryptPayPassword(account.payPassword)
+    })
   }
-  // 请求结算页面
-  await request({
-    uri: URLS.GET_ORDER,
-    headers: {
-      Cookie,
-      'User-Agent': UserAgent,
-      'Content-Type': ContentType
-    },
-    resolveWithFullResponse: true
-  })
   // 提交订单
   return request({
     method: 'POST',
-    uri: URLS.SUBMIT_ORDER,
+    uri: URLS.ORDER_SUBMIT,
     form: params,
     headers: {
-      Cookie,
+      Cookie: account.cookie,
       'User-Agent': UserAgent,
       Host: 'trade.jd.com',
       Referer: 'http://trade.jd.com/shopping/order/getOrderInfo.action'
@@ -239,7 +284,7 @@ async function orderSubmit(Cookie) {
  * @param skuId
  * @returns {Promise<any>}
  */
-function getItemInfo(skuId) {
+export function getGoodInfo(skuId) {
   return request({
     uri: `https://item.jd.com/${skuId}.html`,
     headers: {
@@ -247,14 +292,11 @@ function getItemInfo(skuId) {
     },
     resolveWithFullResponse: true
   }).then((resp) => {
-    const parser = new DOMParser()
-    const html = handleResponse(resp)
-    // 解析返回的HTML代码
-    const dom = parser.parseFromString(html, 'text/html')
+    const dom = handleResponse(resp)
     const pageConfig = dom.querySelectorAll('script')[0].innerText
     const imageSrc = dom.querySelector('#spec-img').dataset.origin
     const name = pageConfig.match(/name: '(.*)'/)[1]
-    const easyBuyUrl = html.match(/easyBuyUrl:"(.*)"/)[1]
+    const easyBuyUrl = pageConfig.match(/easyBuyUrl:"(.*)"/)[1]
     const cat = pageConfig.match(/cat: \[(.*)\]/)[1]
     const venderId = pageConfig.match(/venderId:(\d*)/)[1]
     return {
@@ -272,14 +314,11 @@ function getItemInfo(skuId) {
  * @param skuId
  * @param buyNum
  * @param buyInfo
- * @returns {Promise<any>}
+ * @returns {Promise<boolean>}
  */
-async function getItemStock(skuId, buyNum, buyInfo) {
-  // 请求商品详情页
-  const { cat, venderId } = await getItemInfo(skuId)
-  const area = `${buyInfo['addressList'][0]['provinceId']}_${buyInfo['addressList'][0]['cityId']}_${buyInfo['addressList'][0]['countyId']}_${buyInfo['addressList'][0]['townId']}`
+export function getGoodStock(skuId, buyNum, area, cat, venderId) {
   return request({
-    uri: URLS.GET_ITEM_STOCK,
+    uri: URLS.GET_GOOD_STOCK,
     qs: {
       skuId,
       buyNum,
@@ -311,24 +350,31 @@ async function getItemStock(skuId, buyNum, buyInfo) {
  * 查询京东服务器时间
  * @returns {Promise<any>}
  */
-function getServerTime() {
+export function getServerTime() {
   return request({
     uri: URLS.GET_SERVER_TIME,
     resolveWithFullResponse: true
   }).then((resp) => {
-    return handleResponse(resp)
+    const { serverTime } = handleResponse(resp)
+    return serverTime
   })
 }
 
-export default {
-  cookieCheck,
-  getBuyInfo,
-  killOrderSubmit,
-  selectAllCart,
-  clearCart,
-  addGoodsToCart,
-  orderSubmit,
-  getItemInfo,
-  getItemStock,
-  getServerTime
+export function getGoodPrice(skuId) {
+  return request({
+    uri: URLS.GET_GOOD_PRICE,
+    qs: {
+      type: 1,
+      pduid: +new Date(),
+      skuIds: 'J_' + skuId
+    },
+    resolveWithFullResponse: true,
+    json: true
+  }).then((resp) => {
+    const data = handleResponse(resp)
+    if (data && data.length) {
+      return data[0].p
+    }
+    return null
+  })
 }
