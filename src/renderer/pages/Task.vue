@@ -137,7 +137,7 @@ export default {
       const end = isSetTime ? new Date(startTime) : new Date()
       const basetime = await jd.getServerTime()
       this.logger_message.info({
-        message: `服务器时间: ${dayjs(basetime).format('YYYY-MM-DD HH:mm:ss')}`,
+        message: `服务器时间: ${dayjs(basetime).format('YYYY-MM-DD HH:mm:ss.SSS')}`,
         label: skuId
       })
 

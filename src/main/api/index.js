@@ -218,7 +218,8 @@ export function cartAddGood(Cookie, skuId, buyNum) {
     resolveWithFullResponse: true
   }).then((resp) => {
     const dom = handleResponse(resp)
-    return dom.querySelector('.success-top').innerText.indexOf('成功') > -1
+    const isLogin = dom.querySelector('.success-top')
+    return isLogin && isLogin.indexOf('成功') > -1
   })
 }
 

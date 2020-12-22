@@ -84,6 +84,12 @@ const createKillOrder = async function(task, account) {
   const { skuId, buyNum } = task
   // 获取商品订单
   const buyInfo = await jd.getBuyInfo(account.cookie, skuId, buyNum)
+  if (buyInfo.code !== '200') {
+    return {
+      success: false,
+      message: '抢购失败，请查看登录状态'
+    }
+  }
   const result = await jd.seckillOrderSubmit(account.cookie, skuId, buyNum, buyInfo)
   if (!result) {
     return {
