@@ -29,13 +29,17 @@ electron打包配置还在学习中，所以目前**只支持window版本的安�
 
 ### 软件截图
 
-![jdms](https://github.com/Yx1aoq1/jdms/blob/master/jdms.gif)
+![jdms](https://github.com/Yx1aoq1/jdms/blob/master/img/jdms.gif)
 
 ### TODO
 
 * ~~可能把烦人的message提示改成后台日志~~
 * ~~增加查询商品库存，有库存自动下单的功能~~
 * ~~同步京东服务器时间~~
+
+### 使用说明
+
+* [软件使用说明文档](https://github.com/Yx1aoq1/jdms/blob/master/doc/%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E.md)
 
 ### 声明
 
